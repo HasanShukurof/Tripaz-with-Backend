@@ -12,12 +12,12 @@ class HomeViewModel extends ChangeNotifier {
   String? errorMessage;
   UserModel? user;
   bool isUserLoading = false;
-  bool _isUserLoaded =
-      false; // Kullanıcının yüklenip yüklenmediğini kontrol etmek için flag
+  bool _isUserLoaded = false;
+  Set<int> _favoriteTourIds = {};
 
   HomeViewModel(this._repo) {
-    // ViewModel ilk oluşturulduğunda kullanıcı bilgilerini yükle
     loadUser();
+    _loadFavoriteTours();
   }
 
   Future<void> loadTours() async {
@@ -26,6 +26,7 @@ class HomeViewModel extends ChangeNotifier {
       notifyListeners();
 
       tours = await _repo.getTours();
+      _updateTourFavoriteStatus();
       print('Yüklenen turlar: $tours');
     } catch (e) {
       errorMessage = 'Turlar yüklenirken hata oluştu: $e';
@@ -39,7 +40,7 @@ class HomeViewModel extends ChangeNotifier {
   Future<void> loadUser() async {
     if (_isUserLoaded) {
       print("Kullanıcı bilgisi daha önce yuklendi. Tekrar yüklenmeyecek.");
-      return; // Kullanıcı zaten yüklendiyse fonksiyonu sonlandır.
+      return;
     }
 
     try {
@@ -76,7 +77,7 @@ class HomeViewModel extends ChangeNotifier {
       }
     } finally {
       isUserLoading = false;
-      _isUserLoaded = true; // Kullanıcının yüklendiğini işaretle
+      _isUserLoaded = true;
       notifyListeners();
     }
   }
@@ -90,7 +91,6 @@ class HomeViewModel extends ChangeNotifier {
 
       if (token != null) {
         await _repo.uploadProfileImage(imageFile, token);
-        //  Resim yüklendikten sonra, güncellenmiş kullanıcı bilgilerini çek
         final fetchedUser = await _repo.getUser();
         user = fetchedUser;
 
@@ -99,7 +99,7 @@ class HomeViewModel extends ChangeNotifier {
           await prefs.setString('profile_image_url', user!.profileImageUrl!);
         }
         print('Profile image updated');
-        notifyListeners(); // Notify listeners after updating user
+        notifyListeners();
       } else {
         errorMessage = "Token not found";
         print("Token Not found");
@@ -113,5 +113,57 @@ class HomeViewModel extends ChangeNotifier {
       isUserLoading = false;
       notifyListeners();
     }
+  }
+
+  Future<void> addTourToWishlist(int tourId) async {
+    try {
+      await _repo.addTourToWishlist(tourId);
+      _favoriteTourIds.add(tourId);
+      _saveFavoriteTours();
+      loadTours();
+    } catch (e) {
+      errorMessage = 'Favorilere eklenirken hata oluştu: $e';
+      print("Error adding to wishlist : ${e}");
+      notifyListeners();
+    }
+  }
+
+  Future<void> removeTourFromWishlist(int tourId) async {
+    try {
+      await _repo.removeTourFromWishlist(tourId);
+      _favoriteTourIds.remove(tourId);
+      _saveFavoriteTours();
+      loadTours();
+    } catch (e) {
+      errorMessage = 'Favorilerden çıkarılırken hata oluştu: $e';
+      print("Error removing from wishlist : ${e}");
+      notifyListeners();
+    }
+  }
+
+  void _updateTourFavoriteStatus() {
+    for (var tour in tours) {
+      if (_favoriteTourIds.contains(tour.tourId)) {
+        tour.isFavorite = true;
+      } else {
+        tour.isFavorite = false;
+      }
+    }
+  }
+
+  Future<void> _loadFavoriteTours() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final favoriteIds = prefs.getStringList('favorite_tour_ids');
+    if (favoriteIds != null) {
+      _favoriteTourIds = favoriteIds.map(int.parse).toSet();
+      print("Favorite tours loaded : ${_favoriteTourIds}");
+    }
+  }
+
+  Future<void> _saveFavoriteTours() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    final favoriteIds = _favoriteTourIds.map((id) => id.toString()).toList();
+    await prefs.setStringList('favorite_tour_ids', favoriteIds);
+    print("Favorite tours saved : $_favoriteTourIds");
   }
 }

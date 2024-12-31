@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:tripaz_app/viewmodels/home_view_model.dart';
 import 'package:tripaz_app/views/detail_tour_screen.dart';
 import 'dart:convert';
+import '../widgets/heart_button.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -18,7 +19,6 @@ class _HomeScreenState extends State<HomeScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final homeViewModel = Provider.of<HomeViewModel>(context, listen: false);
       homeViewModel.loadTours();
-      // homeViewModel.loadUser(); // bu satırı sil
     });
   }
 
@@ -28,7 +28,6 @@ class _HomeScreenState extends State<HomeScreen> {
     String defaultImageUrl =
         'https://gabalatours.com/wp-content/uploads/2022/07/things-to-do-in-gabala-1.jpg';
 
-    // Popüler turları filtreleme
     final popularTours = homeViewModel.tours
         .where((tour) => tour.tourPopularStatus == 1)
         .toList();
@@ -140,7 +139,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         ),
                         const SizedBox(height: 10),
                         SizedBox(
-                          height: 300, // veya istediğiniz bir yükseklik
+                          height: 300,
                           child: SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Row(
@@ -161,6 +160,7 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   Widget _buildTourCard(tour, context, defaultImageUrl) {
+    final homeViewModel = Provider.of<HomeViewModel>(context, listen: false);
     return Padding(
       padding: const EdgeInsets.all(3.0),
       child: Container(
@@ -180,40 +180,58 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            GestureDetector(
-              onTap: () {
-                Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) =>
-                          DetailTourScreen(tourId: tour.tourId),
-                    ));
-              },
-              child: ClipRRect(
-                  borderRadius: BorderRadius.circular(10),
-                  child: tour.tourImages.isNotEmpty &&
-                          tour.tourImages[0].tourImageName.isNotEmpty
-                      ? Image.memory(
-                          base64Decode(tour.tourImages[0].tourImageName),
-                          width: 180,
-                          height: 180,
-                          fit: BoxFit.cover,
-                          errorBuilder: (context, error, stackTrace) {
-                            print('Image loading error: $error');
-                            return Image.network(
+            Stack(
+              children: [
+                GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) =>
+                              DetailTourScreen(tourId: tour.tourId),
+                        ));
+                  },
+                  child: ClipRRect(
+                      borderRadius: BorderRadius.circular(10),
+                      child: tour.tourImages.isNotEmpty &&
+                              tour.tourImages[0].tourImageName.isNotEmpty
+                          ? Image.memory(
+                              base64Decode(tour.tourImages[0].tourImageName),
+                              width: 180,
+                              height: 180,
+                              fit: BoxFit.cover,
+                              errorBuilder: (context, error, stackTrace) {
+                                print('Image loading error: $error');
+                                return Image.network(
+                                  defaultImageUrl,
+                                  width: 180,
+                                  height: 180,
+                                  fit: BoxFit.cover,
+                                );
+                              },
+                            )
+                          : Image.network(
                               defaultImageUrl,
                               width: 180,
                               height: 180,
                               fit: BoxFit.cover,
-                            );
-                          },
-                        )
-                      : Image.network(
-                          defaultImageUrl,
-                          width: 180,
-                          height: 180,
-                          fit: BoxFit.cover,
-                        )),
+                            )),
+                ),
+                Positioned(
+                  top: 5,
+                  right: 5,
+                  child: HeartButton(
+                    initialIsFavorite: tour.isFavorite,
+                    onFavoriteChanged: () {
+                      if (tour.isFavorite) {
+                        homeViewModel.removeTourFromWishlist(tour.tourId);
+                      } else {
+                        homeViewModel.addTourToWishlist(tour.tourId);
+                      }
+                    },
+                  ),
+                ),
+              ],
             ),
             Padding(
               padding: const EdgeInsets.all(8.0),

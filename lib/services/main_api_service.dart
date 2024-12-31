@@ -4,7 +4,7 @@ import 'dart:io';
 import '../models/tour_model.dart';
 import '../models/user_login_model.dart';
 import '../models/detail_tour_model.dart';
-import '../models/user_model.dart'; // UserModel'i ekledik
+import '../models/user_model.dart';
 
 class MainApiService {
   final Dio _dio = Dio();
@@ -51,7 +51,7 @@ class MainApiService {
 
   Future<DetailTourModel> fetchTourDetails(int tourId, String token) async {
     final response = await _dio.post(
-      'https://tripaz.azurewebsites.net/api/Tour/$tourId', // tourId URL'e eklendi
+      'https://tripaz.azurewebsites.net/api/Tour/$tourId',
       options: Options(headers: {
         'accept': 'text/plain',
         'Authorization': 'Bearer $token',
@@ -91,7 +91,6 @@ class MainApiService {
       'file': await MultipartFile.fromFile(
         imageFile.path,
         filename: fileName,
-        //contentType: MediaType("image", "jpeg"), // Or any other image type
       ),
     });
 
@@ -114,5 +113,39 @@ class MainApiService {
   Future<void> saveToken(String token) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.setString('access_token', token);
+  }
+
+  Future<void> addTourToWishlist(int tourId, String token) async {
+    final response = await _dio.post(
+      'https://tripaz.azurewebsites.net/api/Tour/wishlist/$tourId', // DÜZELTİLMİŞ URL
+      options: Options(headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print("Successfully added to wishlist tourId : $tourId");
+    } else {
+      print('API Error: ${response.statusCode} - ${response.statusMessage}');
+      throw Exception('Failed to add tour to wishlist');
+    }
+  }
+
+  Future<void> removeTourFromWishlist(int tourId, String token) async {
+    final response = await _dio.post(
+      'https://tripaz.azurewebsites.net/api/Tour/wishlist/$tourId', // DÜZELTİLMİŞ URL
+      options: Options(headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print("Successfully removed from wishlist tourId : $tourId");
+    } else {
+      print('API Error: ${response.statusCode} - ${response.statusMessage}');
+      throw Exception('Failed to remove tour from wishlist');
+    }
   }
 }
