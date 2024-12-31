@@ -117,10 +117,10 @@ class HomeViewModel extends ChangeNotifier {
 
   Future<void> addTourToWishlist(int tourId) async {
     try {
-      await _repo.addTourToWishlist(tourId);
       _favoriteTourIds.add(tourId);
       _saveFavoriteTours();
-      loadTours();
+      await _repo.addTourToWishlist(tourId);
+      _updateTourFavoriteStatus(tourId);
     } catch (e) {
       errorMessage = 'Favorilere eklenirken hata oluştu: $e';
       print("Error adding to wishlist : ${e}");
@@ -130,10 +130,10 @@ class HomeViewModel extends ChangeNotifier {
 
   Future<void> removeTourFromWishlist(int tourId) async {
     try {
-      await _repo.removeTourFromWishlist(tourId);
       _favoriteTourIds.remove(tourId);
       _saveFavoriteTours();
-      loadTours();
+      await _repo.removeTourFromWishlist(tourId);
+      _updateTourFavoriteStatus(tourId);
     } catch (e) {
       errorMessage = 'Favorilerden çıkarılırken hata oluştu: $e';
       print("Error removing from wishlist : ${e}");
@@ -141,14 +141,25 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  void _updateTourFavoriteStatus() {
-    for (var tour in tours) {
+  void _updateTourFavoriteStatus([int? tourId]) {
+    if (tourId == null) {
+      for (var tour in tours) {
+        if (_favoriteTourIds.contains(tour.tourId)) {
+          tour.isFavorite = true;
+        } else {
+          tour.isFavorite = false;
+        }
+      }
+    } else {
+      final tour = tours.firstWhere((element) => element.tourId == tourId);
       if (_favoriteTourIds.contains(tour.tourId)) {
         tour.isFavorite = true;
       } else {
         tour.isFavorite = false;
       }
     }
+
+    notifyListeners();
   }
 
   Future<void> _loadFavoriteTours() async {

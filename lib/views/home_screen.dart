@@ -222,6 +222,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   right: 5,
                   child: HeartButton(
                     initialIsFavorite: tour.isFavorite,
+                    tourId: tour.tourId,
                     onFavoriteChanged: () {
                       if (tour.isFavorite) {
                         homeViewModel.removeTourFromWishlist(tour.tourId);
