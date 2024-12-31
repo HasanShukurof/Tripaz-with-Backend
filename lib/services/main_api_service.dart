@@ -1,0 +1,118 @@
+import 'package:dio/dio.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:io';
+import '../models/tour_model.dart';
+import '../models/user_login_model.dart';
+import '../models/detail_tour_model.dart';
+import '../models/user_model.dart'; // UserModel'i ekledik
+
+class MainApiService {
+  final Dio _dio = Dio();
+
+  Future<UserLoginModel> login(String username, String password) async {
+    final response = await _dio.post(
+      'https://tripaz.azurewebsites.net/api/Authentication/login',
+      data: {
+        'username': username,
+        'password': password,
+      },
+      options: Options(headers: {'Content-Type': 'application/json'}),
+    );
+
+    if (response.statusCode == 200) {
+      String token = response.data['accessToken'];
+      await saveToken(token);
+      print("Kullanici datas: ${response.data}");
+      return UserLoginModel.fromJson(response.data);
+    } else {
+      throw Exception('Login failed');
+    }
+  }
+
+  Future<List<TourModel>> fetchTours(String token) async {
+    final response = await _dio.get(
+      'https://tripaz.azurewebsites.net/api/Tour/tours',
+      options: Options(headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      }),
+    );
+
+    print('API Yanıtı: ${response.data}');
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = response.data;
+      final tourList = data.map((tour) => TourModel.fromJson(tour)).toList();
+      return tourList;
+    } else {
+      throw Exception('Failed to load tours');
+    }
+  }
+
+  Future<DetailTourModel> fetchTourDetails(int tourId, String token) async {
+    final response = await _dio.post(
+      'https://tripaz.azurewebsites.net/api/Tour/$tourId', // tourId URL'e eklendi
+      options: Options(headers: {
+        'accept': 'text/plain',
+        'Authorization': 'Bearer $token',
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print("Tour details: ${response.data}");
+      return DetailTourModel.fromJson(response.data);
+    } else {
+      print('API Error: ${response.statusCode} - ${response.statusMessage}');
+      throw Exception('Failed to load tour details');
+    }
+  }
+
+  Future<UserModel> fetchUser(String token) async {
+    final response = await _dio.get(
+      'https://tripaz.azurewebsites.net/api/Users/user',
+      options: Options(headers: {
+        'accept': 'text/plain',
+        'Authorization': 'Bearer $token',
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print("User datas: ${response.data}");
+      return UserModel.fromJson(response.data);
+    } else {
+      print('API Error: ${response.statusCode} - ${response.statusMessage}');
+      throw Exception('Failed to load user data');
+    }
+  }
+
+  Future<void> uploadProfileImage(File imageFile, String token) async {
+    String fileName = imageFile.path.split('/').last;
+    FormData formData = FormData.fromMap({
+      'file': await MultipartFile.fromFile(
+        imageFile.path,
+        filename: fileName,
+        //contentType: MediaType("image", "jpeg"), // Or any other image type
+      ),
+    });
+
+    final response = await _dio.post(
+      'https://tripaz.azurewebsites.net/api/Users/upload-profile-image',
+      data: formData,
+      options: Options(headers: {
+        'Authorization': 'Bearer $token',
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print('Profile image uploaded successfully');
+    } else {
+      print('API Error: ${response.statusCode} - ${response.statusMessage}');
+      throw Exception('Failed to upload profile image');
+    }
+  }
+
+  Future<void> saveToken(String token) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString('access_token', token);
+  }
+}

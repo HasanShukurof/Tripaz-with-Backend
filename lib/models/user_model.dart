@@ -1,13 +1,13 @@
 class UserModel {
-  final String accessToken;
-  final String refreshToken;
+  String? profileImageUrl;
+  String? userName;
 
-  UserModel({required this.accessToken, required this.refreshToken});
+  UserModel({this.profileImageUrl, this.userName});
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
     return UserModel(
-      accessToken: json['accessToken'],
-      refreshToken: json['refreshToken'],
+      profileImageUrl: json['profileImageUrl'],
+      userName: json['userName'],
     );
   }
 }

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'repositories/auth_repository.dart';
-import 'services/auth_service.dart';
+import 'package:tripaz_app/viewmodels/detail_tour_view_model.dart';
+import 'package:tripaz_app/viewmodels/home_view_model.dart';
+import 'package:tripaz_app/widgets/bottom_navigation_bar.dart';
+import 'repositories/main_repository.dart';
+import 'services/main_api_service.dart';
 import 'viewmodels/login_viewmodel.dart';
 import 'views/login_screen.dart';
 
@@ -10,18 +13,28 @@ void main() {
     MultiProvider(
       providers: [
         // AuthService sağlayıcısı
-        Provider(create: (_) => AuthService()),
+        Provider(create: (_) => MainApiService()),
 
         // AuthRepository, AuthService'e bağımlı
-        ProxyProvider<AuthService, AuthRepository>(
-          update: (_, authService, __) => AuthRepository(authService),
+        ProxyProvider<MainApiService, MainRepository>(
+          update: (_, mainApiService, __) => MainRepository(mainApiService),
         ),
 
         // LoginViewModel, AuthRepository'ye bağımlı
-        ChangeNotifierProxyProvider<AuthRepository, LoginViewModel>(
+        ChangeNotifierProxyProvider<MainRepository, LoginViewModel>(
           create: (_) =>
-              LoginViewModel(AuthRepository(AuthService())), // İlk başlatma
+              LoginViewModel(MainRepository(MainApiService())), // İlk başlatma
           update: (_, authRepository, __) => LoginViewModel(authRepository),
+        ),
+
+        // HomeViewModel'in eklenmesi
+        ChangeNotifierProxyProvider<MainRepository, HomeViewModel>(
+          create: (_) => HomeViewModel(MainRepository(MainApiService())),
+          update: (_, mainRepository, __) => HomeViewModel(mainRepository),
+        ),
+        ChangeNotifierProvider(
+          create: (context) =>
+              DetailTourViewModel(MainRepository(MainApiService())),
         ),
       ],
       child: const TripazApp(),
@@ -40,7 +53,7 @@ class TripazApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: LoginScreen(),
+      home: const BottomNavBar(),
     );
   }
 }

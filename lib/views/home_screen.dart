@@ -1,12 +1,38 @@
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/widgets.dart';
+import 'package:provider/provider.dart';
+import 'package:tripaz_app/viewmodels/home_view_model.dart';
+import 'package:tripaz_app/views/detail_tour_screen.dart';
+import 'dart:convert';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
 
   @override
+  _HomeScreenState createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final homeViewModel = Provider.of<HomeViewModel>(context, listen: false);
+      homeViewModel.loadTours();
+      // homeViewModel.loadUser(); // bu satırı sil
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final homeViewModel = Provider.of<HomeViewModel>(context);
+    String defaultImageUrl =
+        'https://gabalatours.com/wp-content/uploads/2022/07/things-to-do-in-gabala-1.jpg';
+
+    // Popüler turları filtreleme
+    final popularTours = homeViewModel.tours
+        .where((tour) => tour.tourPopularStatus == 1)
+        .toList();
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -19,14 +45,28 @@ class HomeScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Welcome, User',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                      color: Colors.black,
+                  if (homeViewModel.isUserLoading)
+                    const Text("Loading User...")
+                  else if (homeViewModel.errorMessage != null)
+                    Text("Error: ${homeViewModel.errorMessage}")
+                  else if (homeViewModel.user != null)
+                    Text(
+                      'Welcome, ${homeViewModel.user!.userName}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.black,
+                      ),
+                    )
+                  else
+                    const Text(
+                      'Welcome, User',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: Colors.black,
+                      ),
                     ),
-                  ),
                   const Text(
                     "Let's Discover the best places",
                     style: TextStyle(
@@ -41,205 +81,165 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.only(
-          top: 20,
-        ),
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: TextField(
-                  decoration: InputDecoration(
-                    hintText: 'Search...',
-                    prefixIcon: Icon(Icons.search),
-                    border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(10),
+      body: homeViewModel.isLoading
+          ? const Center(child: CircularProgressIndicator())
+          : homeViewModel.tours.isEmpty
+              ? const Center(child: Text('Henüz tur bulunamadı.'))
+              : Padding(
+                  padding: const EdgeInsets.only(top: 20),
+                  child: SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 10),
+                          child: TextField(
+                            decoration: InputDecoration(
+                              hintText: 'Search...',
+                              prefixIcon: const Icon(Icons.search),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        const Padding(
+                          padding: EdgeInsets.only(left: 10),
+                          child: Text(
+                            "Popular Packages",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 19,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          height: 290,
+                          child: ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            itemCount: popularTours.length,
+                            itemBuilder: (context, index) {
+                              final tour = popularTours[index];
+                              return _buildTourCard(
+                                  tour, context, defaultImageUrl);
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 20),
+                        const Padding(
+                          padding: EdgeInsets.only(left: 10),
+                          child: Text(
+                            "All Tours",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 19,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        SizedBox(
+                          height: 300, // veya istediğiniz bir yükseklik
+                          child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            child: Row(
+                              children: List.generate(
+                                  homeViewModel.tours.length, (index) {
+                                final tour = homeViewModel.tours[index];
+                                return _buildTourCard(
+                                    tour, context, defaultImageUrl);
+                              }),
+                            ),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 20),
-              const Padding(
-                padding: EdgeInsets.only(left: 10),
-                child: Text(
-                  "Popular Packages",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
+    );
+  }
+
+  Widget _buildTourCard(tour, context, defaultImageUrl) {
+    return Padding(
+      padding: const EdgeInsets.all(3.0),
+      child: Container(
+        margin: const EdgeInsets.all(5),
+        width: 180,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(10),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.5),
+              spreadRadius: 2,
+              blurRadius: 5,
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          DetailTourScreen(tourId: tour.tourId),
+                    ));
+              },
+              child: ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: tour.tourImages.isNotEmpty &&
+                          tour.tourImages[0].tourImageName.isNotEmpty
+                      ? Image.memory(
+                          base64Decode(tour.tourImages[0].tourImageName),
+                          width: 180,
+                          height: 180,
+                          fit: BoxFit.cover,
+                          errorBuilder: (context, error, stackTrace) {
+                            print('Image loading error: $error');
+                            return Image.network(
+                              defaultImageUrl,
+                              width: 180,
+                              height: 180,
+                              fit: BoxFit.cover,
+                            );
+                          },
+                        )
+                      : Image.network(
+                          defaultImageUrl,
+                          width: 180,
+                          height: 180,
+                          fit: BoxFit.cover,
+                        )),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Text(
+                tour.tourName,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: Colors.black,
                 ),
               ),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 290,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: 5, // Dummy count
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.all(3.0),
-                      child: Container(
-                        margin: const EdgeInsets.all(5),
-                        width: 180,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.5),
-                              spreadRadius: 2,
-                              blurRadius: 5,
-                            ),
-                          ],
-                        ),
-                        child: Stack(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.asset(
-                                'assets/images/placeholder.jpg',
-                                width: 180,
-                                height: 180,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            Positioned(
-                              top: 5,
-                              right: 5,
-                              child: Icon(
-                                Icons.favorite_border,
-                                color: Colors.red,
-                              ),
-                            ),
-                            Positioned(
-                              bottom: 10,
-                              left: 10,
-                              right: 10,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  const Text(
-                                    'Sample Tour Name',
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 5),
-                                  const Text(
-                                    'Total price: 100 AZN',
-                                    style: TextStyle(
-                                      color: Colors.blue,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: Text(
+                'Price: \$${tour.tourPrice}',
+                style: const TextStyle(
+                  color: Colors.blue,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
                 ),
               ),
-              const SizedBox(height: 20),
-              const Padding(
-                padding: EdgeInsets.only(left: 10),
-                child: Text(
-                  "All Packages",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 19),
-                ),
-              ),
-              const SizedBox(height: 10),
-              SizedBox(
-                height: 300,
-                child: ListView.builder(
-                  scrollDirection: Axis.horizontal,
-                  itemCount: 5, // Dummy count
-                  itemBuilder: (context, index) {
-                    return Padding(
-                      padding: const EdgeInsets.all(3.0),
-                      child: Container(
-                        margin: const EdgeInsets.symmetric(horizontal: 5),
-                        width: 200,
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(10),
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.grey.withOpacity(0.5),
-                              spreadRadius: 2,
-                              blurRadius: 5,
-                              offset: const Offset(0, 3),
-                            ),
-                          ],
-                        ),
-                        child: Stack(
-                          children: [
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(10),
-                              child: Image.asset(
-                                'assets/images/placeholder.jpg',
-                                width: 200,
-                                height: 200,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            Positioned(
-                              top: 5,
-                              right: 5,
-                              child: Icon(
-                                Icons.bookmark_border,
-                                color: Colors.blue,
-                              ),
-                            ),
-                            const Positioned(
-                              bottom: 10,
-                              left: 10,
-                              right: 10,
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    "Sample Tour",
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                    style: TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                      color: Colors.black,
-                                    ),
-                                  ),
-                                  SizedBox(height: 5),
-                                  Text(
-                                    "\$380",
-                                    style: TextStyle(
-                                      color: Colors.blue,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 15,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                ),
-              ),
-              const SizedBox(
-                height: 20,
-              ),
-              const Padding(padding: EdgeInsets.all(20)),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
