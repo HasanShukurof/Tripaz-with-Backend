@@ -6,6 +6,7 @@ import 'package:tripaz_app/widgets/bottom_navigation_bar.dart';
 import 'repositories/main_repository.dart';
 import 'services/main_api_service.dart';
 import 'viewmodels/login_viewmodel.dart';
+import 'viewmodels/wish_list_view_model.dart';
 import 'views/login_screen.dart';
 
 void main() {
@@ -36,6 +37,16 @@ void main() {
           create: (context) =>
               DetailTourViewModel(MainRepository(MainApiService())),
         ),
+        ChangeNotifierProxyProvider<MainRepository, WishlistViewModel>(
+          create: (context) => WishlistViewModel(
+            Provider.of<MainRepository>(context, listen: false),
+          ),
+          update: (context, mainRepo, previousWishlistViewModel) =>
+              previousWishlistViewModel ??
+              WishlistViewModel(
+                Provider.of<MainRepository>(context, listen: false),
+              ),
+        ),
       ],
       child: const TripazApp(),
     ),
@@ -53,7 +64,7 @@ class TripazApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const BottomNavBar(),
+      home: const LoginScreen(),
     );
   }
 }

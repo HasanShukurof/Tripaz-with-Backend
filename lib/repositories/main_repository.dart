@@ -5,6 +5,7 @@ import '../models/user_login_model.dart';
 import '../services/main_api_service.dart';
 import '../models/detail_tour_model.dart';
 import '../models/user_model.dart';
+import '../models/wishlist_tour_model.dart'; // WishlistTourModel'i import et
 
 class MainRepository {
   final MainApiService _mainApiService;
@@ -69,5 +70,15 @@ class MainRepository {
       throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
     }
     return await _mainApiService.removeTourFromWishlist(tourId, token);
+  }
+
+  Future<List<WishlistTourModel>> getWishlistTours() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('access_token');
+
+    if (token == null || token.isEmpty) {
+      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+    }
+    return await _mainApiService.fetchWishlistTours(token);
   }
 }

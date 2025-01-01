@@ -5,6 +5,7 @@ import '../models/tour_model.dart';
 import '../models/user_login_model.dart';
 import '../models/detail_tour_model.dart';
 import '../models/user_model.dart';
+import '../models/wishlist_tour_model.dart'; // WishlistTourModel'i import et
 
 class MainApiService {
   final Dio _dio = Dio();
@@ -117,7 +118,7 @@ class MainApiService {
 
   Future<void> addTourToWishlist(int tourId, String token) async {
     final response = await _dio.post(
-      'https://tripaz.azurewebsites.net/api/Tour/wishlist/$tourId', // DÜZELTİLMİŞ URL
+      'https://tripaz.azurewebsites.net/api/Tour/wishlist/$tourId',
       options: Options(headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -134,7 +135,7 @@ class MainApiService {
 
   Future<void> removeTourFromWishlist(int tourId, String token) async {
     final response = await _dio.post(
-      'https://tripaz.azurewebsites.net/api/Tour/wishlist/$tourId', // DÜZELTİLMİŞ URL
+      'https://tripaz.azurewebsites.net/api/Tour/wishlist/$tourId',
       options: Options(headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -146,6 +147,27 @@ class MainApiService {
     } else {
       print('API Error: ${response.statusCode} - ${response.statusMessage}');
       throw Exception('Failed to remove tour from wishlist');
+    }
+  }
+
+  Future<List<WishlistTourModel>> fetchWishlistTours(String token) async {
+    final response = await _dio.get(
+      'https://tripaz.azurewebsites.net/api/Tour/wishlist',
+      options: Options(headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      List<dynamic> data = response.data;
+      final tourList =
+          data.map((tour) => WishlistTourModel.fromJson(tour)).toList();
+      print("Wishlist api datas : $tourList");
+      return tourList;
+    } else {
+      print('API Error: ${response.statusCode} - ${response.statusMessage}');
+      throw Exception('Failed to load wishlist tours');
     }
   }
 }
