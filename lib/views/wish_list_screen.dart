@@ -29,9 +29,11 @@ class _WishListScreenState extends State<WishListScreen> {
     String defaultImageUrl =
         'https://gabalatours.com/wp-content/uploads/2022/07/things-to-do-in-gabala-1.jpg';
     return Scaffold(
+      backgroundColor: Colors.white,
       appBar: AppBar(
+        backgroundColor: Colors.white,
         title: const Text(
-          'My Wishlist',
+          'Wishlist',
           style: TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
         ),
       ),
@@ -39,9 +41,11 @@ class _WishListScreenState extends State<WishListScreen> {
           ? const Center(child: CircularProgressIndicator())
           : wishlistViewModel.wishlistTours.isEmpty
               ? const Center(child: Text('Favori tur bulunamadı.'))
-              : ListView.builder(
+              : ListView.separated(
                   padding: const EdgeInsets.all(10),
                   itemCount: wishlistViewModel.wishlistTours.length,
+                  separatorBuilder: (context, index) =>
+                      Image.asset("assets/images/divider.png"), // Ayraç ekleme
                   itemBuilder: (context, index) {
                     final tour = wishlistViewModel.wishlistTours[index];
                     return _buildTourCard(tour, context, defaultImageUrl);
@@ -51,19 +55,19 @@ class _WishListScreenState extends State<WishListScreen> {
   }
 
   Widget _buildTourCard(tour, context, defaultImageUrl) {
-    return Card(
-      margin: const EdgeInsets.all(8.0),
-      elevation: 4,
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 10),
       child: InkWell(
         onTap: () {
           Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => DetailTourScreen(tourId: tour.tourId),
-              ));
+            context,
+            MaterialPageRoute(
+              builder: (context) => DetailTourScreen(tourId: tour.tourId),
+            ),
+          );
         },
         child: Padding(
-          padding: const EdgeInsets.all(8.0),
+          padding: const EdgeInsets.symmetric(vertical: 18.0),
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -82,7 +86,7 @@ class _WishListScreenState extends State<WishListScreen> {
                           return Image.network(
                             defaultImageUrl,
                             width: 100,
-                            height: 120,
+                            height: 100,
                             fit: BoxFit.cover,
                           );
                         },
@@ -90,38 +94,45 @@ class _WishListScreenState extends State<WishListScreen> {
                     : Image.network(
                         defaultImageUrl,
                         width: 100,
-                        height: 120,
+                        height: 100,
                         fit: BoxFit.cover,
                       ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: 15),
               // Sağ taraf: Tur bilgileri
               Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      tour.tourName,
-                      maxLines: 2,
-                      overflow: TextOverflow.ellipsis,
-                      style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 16),
-                    ),
-                    const SizedBox(height: 4),
-                    const Text(
-                      '1-3 Pax',
-                      style: TextStyle(fontSize: 14, color: Colors.grey),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'Fiyat: ${tour.tourPrice} AZN',
-                      style: const TextStyle(
-                          fontSize: 15,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 2.0),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      const SizedBox(height: 13),
+                      Text(
+                        tour.tourName,
+                        maxLines: 2,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF0FA3E2)),
-                    ),
-                  ],
+                          fontSize: 16,
+                          color: Colors.black87,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      const Text(
+                        '1-3 Pax',
+                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'From \$${tour.tourPrice} / person',
+                        style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black87),
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],

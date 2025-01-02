@@ -38,8 +38,8 @@ class _HeartButtonState extends State<HeartButton> {
   Widget build(BuildContext context) {
     return IconButton(
       icon: Icon(
-        _isFavorite ? Icons.favorite : Icons.favorite_border,
-        color: _isFavorite ? Colors.red : Colors.grey,
+        _isFavorite ? Icons.favorite_border : Icons.favorite,
+        color: _isFavorite ? Colors.white : Colors.red,
       ),
       onPressed: () {
         widget.onFavoriteChanged();

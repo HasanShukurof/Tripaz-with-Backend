@@ -4,6 +4,7 @@ import 'package:tripaz_app/viewmodels/home_view_model.dart';
 import 'package:tripaz_app/views/detail_tour_screen.dart';
 import 'dart:convert';
 import '../widgets/heart_button.dart';
+import '../widgets/tour_card_homescreen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -224,10 +225,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     initialIsFavorite: tour.isFavorite,
                     tourId: tour.tourId,
                     onFavoriteChanged: () {
-                      if (tour.isFavorite) {
-                        homeViewModel.removeTourFromWishlist(tour.tourId);
-                      } else {
+                      if (!tour.isFavorite) {
                         homeViewModel.addTourToWishlist(tour.tourId);
+                      } else {
+                        homeViewModel.removeTourFromWishlist(tour.tourId);
                       }
                     },
                   ),

@@ -64,7 +64,7 @@ class TripazApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const LoginScreen(),
+      home: const BottomNavBar(),
     );
   }
 }
