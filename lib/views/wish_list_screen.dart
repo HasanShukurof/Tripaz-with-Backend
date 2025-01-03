@@ -109,7 +109,7 @@ class _WishListScreenState extends State<WishListScreen> {
                     children: [
                       const SizedBox(height: 13),
                       Text(
-                        tour.tourName,
+                        "${tour.tourName} Tour",
                         maxLines: 2,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
@@ -121,11 +121,11 @@ class _WishListScreenState extends State<WishListScreen> {
                       const SizedBox(height: 4),
                       const Text(
                         '1-3 Pax',
-                        style: TextStyle(fontSize: 14, color: Colors.grey),
+                        style: TextStyle(fontSize: 14, color: Colors.black54),
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'From \$${tour.tourPrice} / person',
+                        '${tour.tourPrice} AZN',
                         style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,

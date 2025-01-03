@@ -238,7 +238,7 @@ class _HomeScreenState extends State<HomeScreen> {
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(
-                tour.tourName,
+                "${tour.tourName} Tour",
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: const TextStyle(
@@ -248,10 +248,23 @@ class _HomeScreenState extends State<HomeScreen> {
                 ),
               ),
             ),
+            const Padding(
+              padding: EdgeInsets.all(8.0),
+              child: Text(
+                "1-3 pax",
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                  color: Colors.black54,
+                ),
+              ),
+            ),
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 8.0),
               child: Text(
-                'Price: \$${tour.tourPrice}',
+                'Price: ${tour.tourPrice} AZN',
                 style: const TextStyle(
                   color: Colors.blue,
                   fontWeight: FontWeight.bold,
