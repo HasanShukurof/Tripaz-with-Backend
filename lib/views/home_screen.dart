@@ -249,7 +249,7 @@ class _HomeScreenState extends State<HomeScreen> {
               ),
             ),
             const Padding(
-              padding: EdgeInsets.all(8.0),
+              padding: EdgeInsets.only(left: 8),
               child: Text(
                 "1-3 pax",
                 maxLines: 2,

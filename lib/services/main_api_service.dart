@@ -82,7 +82,10 @@ class MainApiService {
 
     if (response.statusCode == 200) {
       print("Detail booking data for tourId ($tourId): ${response.data}");
-      return DetailBookingModel.fromJson(response.data);
+      final bookingModel = DetailBookingModel.fromJson(response.data[0]);
+      print(
+          "Detail booking data after model conversion: ${bookingModel.toJson()}");
+      return bookingModel;
     } else {
       print('API Error: ${response.statusCode} - ${response.statusMessage}');
       throw Exception('Failed to load detail booking');

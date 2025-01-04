@@ -19,16 +19,35 @@ class DetailBookingViewModel extends ChangeNotifier {
   List<CarTypeModel> get carTypes => _carTypes;
   String? get selectedCarName => _selectedCarName;
 
+  double get tourPrice => _detailBooking?.tourPrice ?? 0.0;
+  double get tourNightPrice => _detailBooking?.tourNightPrice ?? 0.0;
+  double get tourAirportPrice => _detailBooking?.tourAirportPrice ?? 0.0;
+
+  double get carPrice {
+    if (_selectedCarName == null || _carTypes.isEmpty) {
+      return 0.0;
+    }
+    final selectedCar = _carTypes.firstWhere(
+        (element) => element.carName == _selectedCarName,
+        orElse: () => CarTypeModel());
+    return selectedCar.carPrice ?? 0.0;
+  }
+
   Future<void> fetchDetailBooking(int tourId) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
+    print("fetchDetailBooking metodu başladı"); // Eklendi
 
     try {
       _detailBooking = await _mainRepository.getDetailBooking(tourId);
+      print(
+          "fetchDetailBooking: _detailBooking alındı. Değerler: ${_detailBooking?.toJson()}"); //eklendi
     } catch (e) {
       _errorMessage = 'Rezervasyon detayları yüklenirken bir hata oluştu: $e';
+      print("fetchDetailBooking hata: $e"); //eklendi
     } finally {
+      print("fetchDetailBooking finally çalıştı"); // Eklendi
       _isLoading = false;
       notifyListeners();
     }
@@ -41,6 +60,9 @@ class DetailBookingViewModel extends ChangeNotifier {
 
     try {
       _carTypes = await _mainRepository.getCarTypes(tourId);
+      if (_carTypes.isNotEmpty) {
+        _selectedCarName = _carTypes.first.carName;
+      }
     } catch (e) {
       _errorMessage = 'Araç tipleri yüklenirken bir hata oluştu: $e';
     } finally {

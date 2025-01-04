@@ -7,6 +7,7 @@ import '../models/car_type_model.dart';
 
 class DetailBookingScreen extends StatefulWidget {
   final int tourId;
+
   const DetailBookingScreen({super.key, required this.tourId});
 
   @override
@@ -31,51 +32,44 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
   int? dayDifference;
   double resultAmount = 0;
   int picUpAmount = 0;
-  //Backend'den gelecek olan fiyatlar
-  double sedanPrice = 100.0;
-  double minivanPrice = 150.0;
-  double airportPickUpPrice = 30.0;
+
+  // ViewModel'dan alınacak değişkenler
+  double tourPrice = 0.0;
+  double tourNightPrice = 0.0;
+  double tourAirportPrice = 0.0;
+  double carPrice = 0.0;
 
   void calculate() {
-    print('calculate metodu çalıştı'); // breakpoint için log
+    print('calculate metodu çalıştı');
     if (startDate != null && endDate != null) {
       setState(() {
-        // Tarihler arasındaki farkı hesapla
         dayDifference = endDate!.difference(startDate!).inDays;
-
-        // Eğer fark 0 ise, en az 1 gün olarak hesapla (isteğe bağlı)
       });
     }
 
-    double autoTypeValue = 0;
-    final selectedCarName =
-        Provider.of<DetailBookingViewModel>(context, listen: false)
-            .selectedCarName;
-    final carTypes =
-        Provider.of<DetailBookingViewModel>(context, listen: false).carTypes;
-    final selectedCarType = carTypes.firstWhere(
-        (car) => car.carName == selectedCarName,
-        orElse: () => CarTypeModel());
+    final viewModel =
+        Provider.of<DetailBookingViewModel>(context, listen: false);
+    tourPrice = viewModel.tourPrice;
+    tourNightPrice = viewModel.tourNightPrice;
+    tourAirportPrice = viewModel.tourAirportPrice;
+    carPrice = viewModel.carPrice;
 
-    if (selectedCarName == 'Sedan') {
-      autoTypeValue = sedanPrice;
-    } else if (selectedCarName == 'Minivan') {
-      autoTypeValue = minivanPrice;
-    } else {
-      autoTypeValue = 0;
-    }
+    print('tourPrice: $tourPrice'); // **Bu satırı ekledim**
+    print('tourNightPrice: $tourNightPrice');
+    print('tourAirportPrice: $tourAirportPrice');
+    print('carPrice: $carPrice');
+    print('dayDifference: $dayDifference');
+    print('isCheckedAirportPickUp: $isCheckedAirportPickUp');
 
-    if (dayDifference != null && dayDifference! == 0) {
-      resultAmount = autoTypeValue + (autoTypeValue) * 10 / 100;
-    } else if (dayDifference != null && dayDifference! > 0) {
-      resultAmount = autoTypeValue +
-          (dayDifference! * 100) +
-          (autoTypeValue + (dayDifference! * 100)) * 10 / 100;
-    } else {
-      resultAmount = 0; // Hata durumunda varsayılan bir değer
-    }
-    print(dayDifference);
-    setState(() {});
+    setState(() {
+      resultAmount =
+          tourPrice + carPrice + (tourNightPrice * (dayDifference ?? 0));
+
+      if (isCheckedAirportPickUp) {
+        resultAmount += tourAirportPrice;
+      }
+    });
+    print('resultAmount: $resultAmount');
   }
 
   Future<void> _pickUpTime(BuildContext context) async {
@@ -176,8 +170,12 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<DetailBookingViewModel>(context, listen: false)
-          .fetchCarTypes(widget.tourId);
+      final viewModel =
+          Provider.of<DetailBookingViewModel>(context, listen: false);
+      // Önce fetchDetailBooking'i çağırıp bitmesini bekle, sonra fetchCarTypes'i çağır
+      viewModel.fetchDetailBooking(widget.tourId).then((_) {
+        viewModel.fetchCarTypes(widget.tourId);
+      });
     });
     _focusNode.addListener(() {
       setState(() {});
@@ -202,6 +200,13 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final viewModel =
+        Provider.of<DetailBookingViewModel>(context, listen: false);
+    tourPrice = viewModel.tourPrice;
+    tourNightPrice = viewModel.tourNightPrice;
+    tourAirportPrice = viewModel.tourAirportPrice;
+    carPrice = viewModel.carPrice;
+
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
@@ -216,7 +221,7 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
         ),
       ),
       body: Consumer<DetailBookingViewModel>(
-        builder: (context, viewModel, child) {
+        builder: (context, viewModelConsumer, child) {
           return Column(
             children: [
               Expanded(
@@ -273,7 +278,7 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
                               const SizedBox(
                                 height: 20,
                               ),
-                              Text('Auto type'),
+                              const Text('Auto type'),
                               Container(
                                 decoration: BoxDecoration(
                                     border:
@@ -286,7 +291,7 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
                                     underline: const SizedBox(),
                                     isExpanded: true,
                                     hint: const Text("Choose"),
-                                    value: viewModel.selectedCarName,
+                                    value: viewModelConsumer.selectedCarName,
                                     onChanged: (value) {
                                       viewModel.selectCarName(value!);
                                     },
@@ -379,11 +384,12 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
                                 children: [
                                   Checkbox(
                                     checkColor: Colors.white,
-                                    activeColor: Color(0XFFF0FA3E2),
+                                    activeColor: const Color(0XFFF0FA3E2),
                                     value: isCheckedAirportPickUp,
                                     onChanged: (bool? value) {
                                       setState(() {
                                         isCheckedAirportPickUp = value!;
+                                        calculate();
                                       });
                                     },
                                   ),
@@ -692,9 +698,7 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
                         child: Row(
                           children: [
                             Text(
-                              isCheckedAirportPickUp
-                                  ? '${resultAmount + airportPickUpPrice}'
-                                  : '$resultAmount',
+                              '${resultAmount.toStringAsFixed(2)}',
                               style: const TextStyle(
                                   color: Color(0XFFF0A7BAB),
                                   fontSize: 21,
@@ -712,7 +716,7 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
                           onTap: () {
                             if (_guestNameController.text.isNotEmpty &&
                                 _guestCountController.text.isNotEmpty &&
-                                viewModel.selectedCarName != null &&
+                                viewModelConsumer.selectedCarName != null &&
                                 _completeNumber != null &&
                                 startDate != null &&
                                 endDate != null &&
