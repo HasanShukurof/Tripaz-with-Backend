@@ -5,7 +5,9 @@ import '../models/tour_model.dart';
 import '../models/user_login_model.dart';
 import '../models/detail_tour_model.dart';
 import '../models/user_model.dart';
-import '../models/wishlist_tour_model.dart'; // WishlistTourModel'i import et
+import '../models/wishlist_tour_model.dart';
+import '../models/detail_booking_model.dart';
+import '../models/car_type_model.dart'; // CarTypeModel import edildi
 
 class MainApiService {
   final Dio _dio = Dio();
@@ -47,6 +49,70 @@ class MainApiService {
       return tourList;
     } else {
       throw Exception('Failed to load tours');
+    }
+  }
+
+  Future<TourModel> fetchTour(int tourId, String token) async {
+    final response = await _dio.get(
+      'https://tripaz.azurewebsites.net/api/Tour/tours/$tourId',
+      options: Options(headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print("Tour data for tourId ($tourId): ${response.data}");
+      return TourModel.fromJson(response.data);
+    } else {
+      print('API Error: ${response.statusCode} - ${response.statusMessage}');
+      throw Exception('Failed to load tour');
+    }
+  }
+
+  Future<DetailBookingModel> fetchDetailBooking(
+      int tourId, String token) async {
+    final response = await _dio.get(
+      'https://tripaz.azurewebsites.net/api/Tour/tours/$tourId',
+      options: Options(headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print("Detail booking data for tourId ($tourId): ${response.data}");
+      return DetailBookingModel.fromJson(response.data);
+    } else {
+      print('API Error: ${response.statusCode} - ${response.statusMessage}');
+      throw Exception('Failed to load detail booking');
+    }
+  }
+
+  Future<List<CarTypeModel>> fetchCarTypes(int tourId, String token) async {
+    final response = await _dio.get(
+      'https://tripaz.azurewebsites.net/api/Tour/cars/$tourId',
+      options: Options(headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer $token',
+        'accept': 'text/plain',
+      }),
+    );
+
+    if (response.statusCode == 200) {
+      print("Car types for tourId ($tourId): ${response.data}");
+      if (response.data is List) {
+        List<dynamic> data = response.data;
+        final carTypeList =
+            data.map((carType) => CarTypeModel.fromJson(carType)).toList();
+        return carTypeList;
+      } else {
+        throw Exception(
+            'Unexpected JSON format: Expected a list of car types.');
+      }
+    } else {
+      print('API Error: ${response.statusCode} - ${response.statusMessage}');
+      throw Exception('Failed to load car types');
     }
   }
 

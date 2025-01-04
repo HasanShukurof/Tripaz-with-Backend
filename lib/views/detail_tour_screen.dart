@@ -435,7 +435,8 @@ class _DetailTourScreenState extends State<DetailTourScreen> {
                       onTap: () => Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => DetailBookingScreen(),
+                          builder: (context) =>
+                              DetailBookingScreen(tourId: widget.tourId),
                         ),
                       ),
                       child: const Card(

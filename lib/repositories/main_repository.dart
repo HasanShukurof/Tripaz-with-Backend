@@ -5,7 +5,9 @@ import '../models/user_login_model.dart';
 import '../services/main_api_service.dart';
 import '../models/detail_tour_model.dart';
 import '../models/user_model.dart';
-import '../models/wishlist_tour_model.dart'; // WishlistTourModel'i import et
+import '../models/wishlist_tour_model.dart';
+import '../models/detail_booking_model.dart';
+import '../models/car_type_model.dart'; // CarTypeModel import edildi
 
 class MainRepository {
   final MainApiService _mainApiService;
@@ -23,9 +25,37 @@ class MainRepository {
     if (token == null || token.isEmpty) {
       throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
     }
+    return await _mainApiService.fetchTours(token);
+  }
 
-    final tours = _mainApiService.fetchTours(token);
-    return await tours;
+  Future<TourModel> getTour(int tourId) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('access_token');
+
+    if (token == null || token.isEmpty) {
+      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+    }
+    return await _mainApiService.fetchTour(tourId, token);
+  }
+
+  Future<DetailBookingModel> getDetailBooking(int tourId) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('access_token');
+
+    if (token == null || token.isEmpty) {
+      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+    }
+    return await _mainApiService.fetchDetailBooking(tourId, token);
+  }
+
+  Future<List<CarTypeModel>> getCarTypes(int tourId) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('access_token');
+
+    if (token == null || token.isEmpty) {
+      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+    }
+    return await _mainApiService.fetchCarTypes(tourId, token);
   }
 
   Future<DetailTourModel> getTourDetails(int tourId) async {
@@ -49,6 +79,12 @@ class MainRepository {
   }
 
   Future<void> uploadProfileImage(File imageFile, String token) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('access_token');
+
+    if (token == null || token.isEmpty) {
+      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+    }
     return await _mainApiService.uploadProfileImage(imageFile, token);
   }
 

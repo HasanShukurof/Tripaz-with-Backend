@@ -8,6 +8,7 @@ import 'services/main_api_service.dart';
 import 'viewmodels/login_viewmodel.dart';
 import 'viewmodels/wish_list_view_model.dart';
 import 'views/login_screen.dart';
+import 'viewmodels/detail_booking_view_model.dart'; // DetailBookingViewModel import edildi
 
 void main() {
   runApp(
@@ -36,6 +37,16 @@ void main() {
         ChangeNotifierProvider(
           create: (context) =>
               DetailTourViewModel(MainRepository(MainApiService())),
+        ),
+        ChangeNotifierProxyProvider<MainRepository, DetailBookingViewModel>(
+          create: (context) => DetailBookingViewModel(
+            Provider.of<MainRepository>(context, listen: false),
+          ),
+          update: (context, mainRepo, previousDetailBookingViewModel) =>
+              previousDetailBookingViewModel ??
+              DetailBookingViewModel(
+                Provider.of<MainRepository>(context, listen: false),
+              ),
         ),
         ChangeNotifierProxyProvider<MainRepository, WishlistViewModel>(
           create: (context) => WishlistViewModel(
