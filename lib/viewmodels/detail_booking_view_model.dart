@@ -9,7 +9,7 @@ class DetailBookingViewModel extends ChangeNotifier {
   String? _errorMessage;
   bool _isLoading = false;
   List<CarTypeModel> _carTypes = [];
-  String? _selectedCarName;
+  String? _selectedCarName; // Başlangıçta null
 
   DetailBookingViewModel(this._mainRepository);
 
@@ -37,17 +37,17 @@ class DetailBookingViewModel extends ChangeNotifier {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
-    print("fetchDetailBooking metodu başladı"); // Eklendi
+    print("fetchDetailBooking metodu başladı");
 
     try {
       _detailBooking = await _mainRepository.getDetailBooking(tourId);
       print(
-          "fetchDetailBooking: _detailBooking alındı. Değerler: ${_detailBooking?.toJson()}"); //eklendi
+          "fetchDetailBooking: _detailBooking alındı. Değerler: ${_detailBooking?.toJson()}");
     } catch (e) {
       _errorMessage = 'Rezervasyon detayları yüklenirken bir hata oluştu: $e';
-      print("fetchDetailBooking hata: $e"); //eklendi
+      print("fetchDetailBooking hata: $e");
     } finally {
-      print("fetchDetailBooking finally çalıştı"); // Eklendi
+      print("fetchDetailBooking finally çalıştı");
       _isLoading = false;
       notifyListeners();
     }
@@ -60,9 +60,6 @@ class DetailBookingViewModel extends ChangeNotifier {
 
     try {
       _carTypes = await _mainRepository.getCarTypes(tourId);
-      if (_carTypes.isNotEmpty) {
-        _selectedCarName = _carTypes.first.carName;
-      }
     } catch (e) {
       _errorMessage = 'Araç tipleri yüklenirken bir hata oluştu: $e';
     } finally {

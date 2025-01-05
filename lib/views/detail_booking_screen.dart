@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:provider/provider.dart';
 import 'package:tripaz_app/viewmodels/detail_booking_view_model.dart';
+import 'package:tripaz_app/views/home_screen.dart';
 
 import '../models/car_type_model.dart';
 
@@ -80,6 +81,7 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
     if (picked != null && picked != pickUpTime) {
       setState(() {
         pickUpTime = picked;
+        calculate();
       });
     }
   }
@@ -94,6 +96,7 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
     if (picked != null) {
       setState(() {
         pickUpDate = picked;
+        calculate();
       });
     }
   }
@@ -127,6 +130,7 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
       } else {
         setState(() {
           startDate = picked;
+          calculate();
         });
       }
     }
@@ -161,6 +165,7 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
       } else {
         setState(() {
           endDate = picked;
+          calculate();
         });
       }
     }
@@ -290,10 +295,16 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
                                   child: DropdownButton<String>(
                                     underline: const SizedBox(),
                                     isExpanded: true,
-                                    hint: const Text("Choose"),
+                                    hint: viewModelConsumer.selectedCarName ==
+                                            null
+                                        ? const Text("Choose auto")
+                                        : null,
                                     value: viewModelConsumer.selectedCarName,
                                     onChanged: (value) {
-                                      viewModel.selectCarName(value!);
+                                      if (value != null) {
+                                        viewModel.selectCarName(value);
+                                        calculate();
+                                      }
                                     },
                                     items: viewModel.carTypes.map((carType) {
                                       return DropdownMenuItem<String>(
@@ -653,30 +664,6 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
                               const SizedBox(
                                 height: 30,
                               ),
-                              GestureDetector(
-                                onTap: () => calculate(),
-                                child: const Card(
-                                  elevation: 2.2,
-                                  color: Color(0XFFF0FA3E2),
-                                  child: SizedBox(
-                                    height: 60,
-                                    child: Align(
-                                      alignment: Alignment.center,
-                                      child: Text(
-                                        "Calculate",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.white,
-                                          fontSize: 15,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(
-                                height: 30,
-                              ),
                             ],
                           ),
                         ),
@@ -715,7 +702,6 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
                         child: GestureDetector(
                           onTap: () {
                             if (_guestNameController.text.isNotEmpty &&
-                                _guestCountController.text.isNotEmpty &&
                                 viewModelConsumer.selectedCarName != null &&
                                 _completeNumber != null &&
                                 startDate != null &&
@@ -724,7 +710,11 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
                                     (pickUpDate != null &&
                                         pickUpTime != null))) {
                               print("Tüm alanlar dolu, geçiş yapılıyor.");
-                              //Burada bir sonraki sayfaya geçebilirsiniz.
+                              Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const HomeScreen(),
+                                  ));
                             } else {
                               showDialog(
                                 context: context,
