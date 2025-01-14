@@ -14,7 +14,7 @@ class MainApiService {
 
   Future<UserLoginModel> login(String username, String password) async {
     final response = await _dio.post(
-      'https://tripaz.azurewebsites.net/api/Authentication/login',
+      'https://tripaz.az/api/Authentication/login',
       data: {
         'username': username,
         'password': password,
@@ -34,7 +34,7 @@ class MainApiService {
 
   Future<List<TourModel>> fetchTours(String token) async {
     final response = await _dio.get(
-      'https://tripaz.azurewebsites.net/api/Tour/tours',
+      'https://tripaz.az/api/Tour/tours',
       options: Options(headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -54,7 +54,7 @@ class MainApiService {
 
   Future<TourModel> fetchTour(int tourId, String token) async {
     final response = await _dio.get(
-      'https://tripaz.azurewebsites.net/api/Tour/tours/$tourId',
+      'https://tripaz.az/api/Tour/tours/$tourId',
       options: Options(headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -73,7 +73,7 @@ class MainApiService {
   Future<DetailBookingModel> fetchDetailBooking(
       int tourId, String token) async {
     final response = await _dio.get(
-      'https://tripaz.azurewebsites.net/api/Tour/tours/$tourId',
+      'https://tripaz.az/api/Tour/tours/$tourId',
       options: Options(headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -94,7 +94,7 @@ class MainApiService {
 
   Future<List<CarTypeModel>> fetchCarTypes(int tourId, String token) async {
     final response = await _dio.get(
-      'https://tripaz.azurewebsites.net/api/Tour/cars/$tourId',
+      'https://tripaz.az/api/Tour/cars/$tourId',
       options: Options(headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -121,7 +121,7 @@ class MainApiService {
 
   Future<DetailTourModel> fetchTourDetails(int tourId, String token) async {
     final response = await _dio.post(
-      'https://tripaz.azurewebsites.net/api/Tour/$tourId',
+      'https://tripaz.az/api/Tour/$tourId',
       options: Options(headers: {
         'accept': 'text/plain',
         'Authorization': 'Bearer $token',
@@ -139,7 +139,7 @@ class MainApiService {
 
   Future<UserModel> fetchUser(String token) async {
     final response = await _dio.get(
-      'https://tripaz.azurewebsites.net/api/Users/user',
+      'https://tripaz.az/api/Users/user',
       options: Options(headers: {
         'accept': 'text/plain',
         'Authorization': 'Bearer $token',
@@ -165,7 +165,7 @@ class MainApiService {
     });
 
     final response = await _dio.post(
-      'https://tripaz.azurewebsites.net/api/Users/upload-profile-image',
+      'https://tripaz.az/api/Users/upload-profile-image',
       data: formData,
       options: Options(headers: {
         'Authorization': 'Bearer $token',
@@ -187,7 +187,7 @@ class MainApiService {
 
   Future<void> addTourToWishlist(int tourId, String token) async {
     final response = await _dio.post(
-      'https://tripaz.azurewebsites.net/api/Tour/wishlist/$tourId',
+      'https://tripaz.az/api/Tour/wishlist/$tourId',
       options: Options(headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -204,7 +204,7 @@ class MainApiService {
 
   Future<void> removeTourFromWishlist(int tourId, String token) async {
     final response = await _dio.post(
-      'https://tripaz.azurewebsites.net/api/Tour/wishlist/$tourId',
+      'https://tripaz.az/api/Tour/wishlist/$tourId',
       options: Options(headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
@@ -221,7 +221,7 @@ class MainApiService {
 
   Future<List<WishlistTourModel>> fetchWishlistTours(String token) async {
     final response = await _dio.get(
-      'https://tripaz.azurewebsites.net/api/Tour/wishlist',
+      'https://tripaz.az/api/Tour/wishlist',
       options: Options(headers: {
         'Content-Type': 'application/json',
         'Authorization': 'Bearer $token',
