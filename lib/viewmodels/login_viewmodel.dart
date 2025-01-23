@@ -33,4 +33,29 @@ class LoginViewModel extends ChangeNotifier {
       return null;
     }
   }
+
+  Future<bool> register({
+    required String username,
+    required String email,
+    required String password,
+  }) async {
+    try {
+      isLoading = true;
+      notifyListeners();
+
+      await _repo.register(
+        username: username,
+        email: email,
+        password: password,
+      );
+
+      return true;
+    } catch (e) {
+      errorMessage = e.toString();
+      return false;
+    } finally {
+      isLoading = false;
+      notifyListeners();
+    }
+  }
 }

@@ -117,4 +117,16 @@ class MainRepository {
     }
     return await _mainApiService.fetchWishlistTours(token);
   }
+
+  Future<void> register({
+    required String username,
+    required String email,
+    required String password,
+  }) async {
+    await _mainApiService.register(
+      username: username,
+      email: email,
+      password: password,
+    );
+  }
 }

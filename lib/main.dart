@@ -9,6 +9,7 @@ import 'viewmodels/login_viewmodel.dart';
 import 'viewmodels/wish_list_view_model.dart';
 import 'views/login_screen.dart';
 import 'viewmodels/detail_booking_view_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 void main() {
   runApp(
@@ -71,11 +72,35 @@ class TripazApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      title: 'API Login Example',
+      title: 'Tripaz App',
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: const BottomNavBar(),
+      home: FutureBuilder<bool>(
+        future: _checkLoginStatus(),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          // Token varsa BottomNavBar, yoksa LoginScreen göster
+          return snapshot.data == true
+              ? const BottomNavBar() // Doğrudan HomeScreen yerine BottomNavBar
+              : const LoginScreen();
+        },
+      ),
     );
+  }
+
+  Future<bool> _checkLoginStatus() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('access_token');
+      print("Token check result: ${token != null && token.isNotEmpty}");
+      return token != null && token.isNotEmpty;
+    } catch (e) {
+      print("Token check error: $e");
+      return false;
+    }
   }
 }

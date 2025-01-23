@@ -1,24 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/login_viewmodel.dart';
-import '../widgets/bottom_navigation_bar.dart';
-import 'register_screen.dart';
+import 'login_screen.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class RegisterScreen extends StatefulWidget {
+  const RegisterScreen({super.key});
 
   @override
-  State<LoginScreen> createState() => _LogInScreenState();
+  State<RegisterScreen> createState() => _RegisterScreenState();
 }
 
-class _LogInScreenState extends State<LoginScreen> {
+class _RegisterScreenState extends State<RegisterScreen> {
+  final TextEditingController _fullNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
 
   void _showErrorDialog(String message) {
-    if (!mounted) return;
-
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -32,30 +30,6 @@ class _LogInScreenState extends State<LoginScreen> {
         ],
       ),
     );
-  }
-
-  Future<void> _login() async {
-    final loginViewModel = Provider.of<LoginViewModel>(context, listen: false);
-
-    try {
-      final user = await loginViewModel.login(
-        _emailController.text,
-        _passwordController.text,
-      );
-
-      if (user != null && mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const BottomNavBar()),
-        );
-      } else if (mounted) {
-        _showErrorDialog(loginViewModel.errorMessage ?? 'Login failed.');
-      }
-    } catch (e) {
-      if (mounted) {
-        _showErrorDialog('An error occurred during login.');
-      }
-    }
   }
 
   @override
@@ -75,11 +49,9 @@ class _LogInScreenState extends State<LoginScreen> {
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
                           children: [
-                            const SizedBox(
-                              height: 60,
-                            ),
+                            const SizedBox(height: 60),
                             const Text(
-                              "Login",
+                              "Register",
                               style: TextStyle(
                                 fontSize: 22,
                                 color: Colors.black,
@@ -87,6 +59,25 @@ class _LogInScreenState extends State<LoginScreen> {
                               ),
                             ),
                             const SizedBox(height: 30),
+                            TextField(
+                              controller: _fullNameController,
+                              decoration: InputDecoration(
+                                labelText: 'Full Name',
+                                labelStyle:
+                                    const TextStyle(color: Colors.black),
+                                enabledBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                      color: Color(0xFF94A3B8)),
+                                ),
+                                focusedBorder: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(10),
+                                  borderSide: const BorderSide(
+                                      color: Color(0xFF94A3B8)),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
                             TextField(
                               keyboardType: TextInputType.emailAddress,
                               controller: _emailController,
@@ -108,7 +99,6 @@ class _LogInScreenState extends State<LoginScreen> {
                             ),
                             const SizedBox(height: 20),
                             TextField(
-                              keyboardType: TextInputType.visiblePassword,
                               controller: _passwordController,
                               obscureText: !_isPasswordVisible,
                               decoration: InputDecoration(
@@ -146,9 +136,27 @@ class _LogInScreenState extends State<LoginScreen> {
                                 style: ElevatedButton.styleFrom(
                                   backgroundColor: const Color(0XFFF39C4FF),
                                 ),
-                                onPressed: _login,
+                                onPressed: () async {
+                                  final success = await loginViewModel.register(
+                                    username: _fullNameController.text,
+                                    email: _emailController.text,
+                                    password: _passwordController.text,
+                                  );
+
+                                  if (success && mounted) {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              const LoginScreen()),
+                                    );
+                                  } else {
+                                    _showErrorDialog(
+                                        'Registration failed. Please try again.');
+                                  }
+                                },
                                 child: const Text(
-                                  "Login",
+                                  "Register",
                                   style: TextStyle(
                                     color: Colors.white,
                                     fontWeight: FontWeight.bold,
@@ -156,18 +164,17 @@ class _LogInScreenState extends State<LoginScreen> {
                                 ),
                               ),
                             ),
-                            const SizedBox(height: 20),
                             TextButton(
                               onPressed: () {
-                                Navigator.push(
+                                Navigator.pushReplacement(
                                   context,
                                   MaterialPageRoute(
                                       builder: (context) =>
-                                          const RegisterScreen()),
+                                          const LoginScreen()),
                                 );
                               },
                               child: const Text(
-                                "Don't have an account? Register",
+                                'Already have an account? Login',
                                 style: TextStyle(color: Colors.black),
                               ),
                             ),
@@ -180,5 +187,13 @@ class _LogInScreenState extends State<LoginScreen> {
               ],
             ),
     );
+  }
+
+  @override
+  void dispose() {
+    _fullNameController.dispose();
+    _emailController.dispose();
+    _passwordController.dispose();
+    super.dispose();
   }
 }

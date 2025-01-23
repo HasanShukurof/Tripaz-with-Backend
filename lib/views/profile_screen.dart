@@ -6,6 +6,8 @@ import '../viewmodels/home_view_model.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:typed_data';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'login_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, this.userId});
@@ -167,12 +169,32 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   ),
                   const SizedBox(height: 45),
                   GestureDetector(
-                    onTap: () {},
+                    onTap: () async {
+                      try {
+                        // Tüm local storage'ı temizle
+                        final prefs = await SharedPreferences.getInstance();
+                        await prefs
+                            .clear(); // access_token, user_name ve diğer tüm verileri siler
+
+                        if (mounted) {
+                          // LoginScreen'e yönlendir ve tüm stack'i temizle
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(
+                              builder: (context) => const LoginScreen(),
+                            ),
+                            (route) => false,
+                          );
+                        }
+                      } catch (e) {
+                        print("Logout error: $e");
+                      }
+                    },
                     child: Container(
                       height: 50,
                       decoration: BoxDecoration(
-                          border: Border.all(color: Colors.grey.shade400),
-                          borderRadius: BorderRadius.circular(11)),
+                        border: Border.all(color: Colors.grey.shade400),
+                        borderRadius: BorderRadius.circular(11),
+                      ),
                       child: const Row(
                         crossAxisAlignment: CrossAxisAlignment.center,
                         mainAxisAlignment: MainAxisAlignment.center,

@@ -13,22 +13,43 @@ class MainApiService {
   final Dio _dio = Dio();
 
   Future<UserLoginModel> login(String username, String password) async {
-    final response = await _dio.post(
-      'https://tripaz.az/api/Authentication/login',
-      data: {
-        'username': username,
-        'password': password,
-      },
-      options: Options(headers: {'Content-Type': 'application/json'}),
-    );
+    try {
+      print("Login attempt - Email: $username");
 
-    if (response.statusCode == 200) {
-      String token = response.data['accessToken'];
-      await saveToken(token);
-      print("Kullanici datas: ${response.data}");
-      return UserLoginModel.fromJson(response.data);
-    } else {
-      throw Exception('Login failed');
+      // API'nin beklediği formatta request body
+      Map<String, dynamic> requestBody = {
+        "Email": username, // "email" yerine "Email"
+        "Password": password, // "password" yerine "Password"
+      };
+
+      print("Login request body: $requestBody");
+
+      final response = await _dio.post(
+        'https://tripaz.az/api/Authentication/login',
+        data: requestBody,
+        options: Options(
+          headers: {'Content-Type': 'application/json'},
+          validateStatus: (status) => true,
+        ),
+      );
+
+      print("Login response status: ${response.statusCode}");
+      print("Login response data: ${response.data}");
+
+      if (response.statusCode == 200) {
+        String token = response.data['accessToken'];
+        await saveToken(token);
+        print("Login successful - Token saved");
+        return UserLoginModel.fromJson(response.data);
+      } else {
+        final errorMessage = response.data['errors']?['Email']?.first ??
+            response.data['message'] ??
+            'Login failed';
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      print("Login error: ${e.toString()}");
+      rethrow;
     }
   }
 
@@ -237,6 +258,41 @@ class MainApiService {
     } else {
       print('API Error: ${response.statusCode} - ${response.statusMessage}');
       throw Exception('Failed to load wishlist tours');
+    }
+  }
+
+  Future<void> register({
+    required String username,
+    required String email,
+    required String password,
+  }) async {
+    try {
+      print("Registration attempt - Username: $username, Email: $email");
+
+      final response = await _dio.post(
+        'https://tripaz.az/api/Authentication/register',
+        data: {
+          'username': username,
+          'email': email,
+          'password': password,
+        },
+        options: Options(
+          headers: {'Content-Type': 'application/json'},
+          validateStatus: (status) => true, // Tüm status kodlarını kabul et
+        ),
+      );
+
+      print("Registration response status: ${response.statusCode}");
+      print("Registration response data: ${response.data}");
+
+      if (response.statusCode == 200) {
+        print("Registration successful");
+      } else {
+        throw Exception(response.data['message'] ?? 'Registration failed');
+      }
+    } catch (e) {
+      print("Registration error: ${e.toString()}");
+      rethrow;
     }
   }
 }

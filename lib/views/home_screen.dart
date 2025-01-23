@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tripaz_app/viewmodels/home_view_model.dart';
-import 'package:tripaz_app/views/detail_tour_screen.dart';
-import 'dart:convert';
-import '../widgets/heart_button.dart';
+import '../models/tour_model.dart';
 import '../widgets/tour_card_homescreen.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -14,6 +12,9 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
+  final TextEditingController _searchController = TextEditingController();
+  List<TourModel> filteredTours = [];
+
   @override
   void initState() {
     super.initState();
@@ -23,14 +24,35 @@ class _HomeScreenState extends State<HomeScreen> {
     });
   }
 
+  void _searchTours(String query) {
+    final homeViewModel = Provider.of<HomeViewModel>(context, listen: false);
+
+    setState(() {
+      if (query.isEmpty) {
+        filteredTours = homeViewModel.tours;
+      } else {
+        // Tüm turlarda arama yap
+        filteredTours = homeViewModel.tours.where((tour) {
+          return tour.tourName.toLowerCase().contains(query.toLowerCase());
+        }).toList();
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final homeViewModel = Provider.of<HomeViewModel>(context);
     String defaultImageUrl =
         'https://gabalatours.com/wp-content/uploads/2022/07/things-to-do-in-gabala-1.jpg';
 
-    final popularTours = homeViewModel.tours
-        .where((tour) => tour.tourPopularStatus == 1)
+    // Arama sonuçlarını göster veya tüm turları göster
+    final toursToDisplay =
+        _searchController.text.isEmpty ? homeViewModel.tours : filteredTours;
+
+    // Popular turları filtrele - arama yapılmışsa filtrelenmiş listeden, yapılmamışsa tüm listeden
+    final popularTours = toursToDisplay
+        .where((tour) =>
+            tour.tourPopularStatus == 1 || tour.tourPopularStatus == null)
         .toList();
 
     return Scaffold(
@@ -94,39 +116,59 @@ class _HomeScreenState extends State<HomeScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           child: TextField(
+                            controller: _searchController,
+                            onChanged: _searchTours,
                             decoration: InputDecoration(
-                              hintText: 'Search...',
+                              hintText: 'Search tours...',
                               prefixIcon: const Icon(Icons.search),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
+                                borderSide:
+                                    const BorderSide(color: Colors.grey),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide:
+                                    const BorderSide(color: Colors.grey),
+                              ),
+                              focusedBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(10),
+                                borderSide:
+                                    const BorderSide(color: Colors.blue),
                               ),
                             ),
                           ),
                         ),
                         const SizedBox(height: 20),
-                        const Padding(
-                          padding: EdgeInsets.only(left: 10),
-                          child: Text(
-                            "Popular Packages",
-                            style: TextStyle(
-                              fontWeight: FontWeight.bold,
-                              fontSize: 19,
-                            ),
+                        if (popularTours.isNotEmpty ||
+                            _searchController.text.isEmpty)
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Padding(
+                                padding: EdgeInsets.only(left: 10),
+                                child: Text(
+                                  "Popular Packages",
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 19,
+                                  ),
+                                ),
+                              ),
+                              SizedBox(
+                                height: 290,
+                                child: ListView.builder(
+                                  scrollDirection: Axis.horizontal,
+                                  itemCount: popularTours.length,
+                                  itemBuilder: (context, index) {
+                                    final tour = popularTours[index];
+                                    return _buildTourCard(
+                                        tour, context, defaultImageUrl);
+                                  },
+                                ),
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 10),
-                        SizedBox(
-                          height: 290,
-                          child: ListView.builder(
-                            scrollDirection: Axis.horizontal,
-                            itemCount: popularTours.length,
-                            itemBuilder: (context, index) {
-                              final tour = popularTours[index];
-                              return _buildTourCard(
-                                  tour, context, defaultImageUrl);
-                            },
-                          ),
-                        ),
                         const SizedBox(height: 20),
                         const Padding(
                           padding: EdgeInsets.only(left: 10),
@@ -144,9 +186,9 @@ class _HomeScreenState extends State<HomeScreen> {
                           child: SingleChildScrollView(
                             scrollDirection: Axis.horizontal,
                             child: Row(
-                              children: List.generate(
-                                  homeViewModel.tours.length, (index) {
-                                final tour = homeViewModel.tours[index];
+                              children:
+                                  List.generate(toursToDisplay.length, (index) {
+                                final tour = toursToDisplay[index];
                                 return _buildTourCard(
                                     tour, context, defaultImageUrl);
                               }),
@@ -160,117 +202,17 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  Widget _buildTourCard(tour, context, defaultImageUrl) {
-    final homeViewModel = Provider.of<HomeViewModel>(context, listen: false);
-    return Padding(
-      padding: const EdgeInsets.all(3.0),
-      child: Container(
-        margin: const EdgeInsets.all(5),
-        width: 180,
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(10),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withOpacity(0.5),
-              spreadRadius: 2,
-              blurRadius: 5,
-            ),
-          ],
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Stack(
-              children: [
-                GestureDetector(
-                  onTap: () {
-                    Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              DetailTourScreen(tourId: tour.tourId),
-                        ));
-                  },
-                  child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10),
-                      child: tour.tourImages.isNotEmpty &&
-                              tour.tourImages[0].tourImageName.isNotEmpty
-                          ? Image.memory(
-                              base64Decode(tour.tourImages[0].tourImageName),
-                              width: 180,
-                              height: 180,
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                print('Image loading error: $error');
-                                return Image.network(
-                                  defaultImageUrl,
-                                  width: 180,
-                                  height: 180,
-                                  fit: BoxFit.cover,
-                                );
-                              },
-                            )
-                          : Image.network(
-                              defaultImageUrl,
-                              width: 180,
-                              height: 180,
-                              fit: BoxFit.cover,
-                            )),
-                ),
-                Positioned(
-                  top: 5,
-                  right: 5,
-                  child: HeartButton(
-                    initialIsFavorite: tour.isFavorite,
-                    tourId: tour.tourId,
-                    onFavoriteChanged: () {
-                      homeViewModel.toggleWishlist(tour.tourId);
-                    },
-                  ),
-                ),
-              ],
-            ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "${tour.tourName} Tour",
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: Colors.black,
-                ),
-              ),
-            ),
-            const Padding(
-              padding: EdgeInsets.only(left: 8),
-              child: Text(
-                "1-3 pax",
-                maxLines: 2,
-                overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                  color: Colors.black54,
-                ),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: Text(
-                'Price: ${tour.tourPrice} AZN',
-                style: const TextStyle(
-                  color: Colors.blue,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
+  Widget _buildTourCard(
+      TourModel tour, BuildContext context, String defaultImageUrl) {
+    return TourCardHomeScreen(
+      tour: tour,
+      defaultImageUrl: defaultImageUrl,
     );
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 }
