@@ -81,11 +81,7 @@ class TourCardHomeScreen extends StatelessWidget {
                     initialIsFavorite: tour.isFavorite,
                     tourId: tour.tourId,
                     onFavoriteChanged: () {
-                      if (tour.isFavorite) {
-                        homeViewModel.removeTourFromWishlist(tour.tourId);
-                      } else {
-                        homeViewModel.addTourToWishlist(tour.tourId);
-                      }
+                      homeViewModel.toggleWishlist(tour.tourId);
                     },
                   ),
                 ),

@@ -25,12 +25,18 @@ class HomeViewModel extends ChangeNotifier {
       isLoading = true;
       notifyListeners();
 
+      final wishlistTours = await _repo.getWishlistTours();
+      final wishlistTourIds = wishlistTours.map((tour) => tour.tourId).toSet();
+
       tours = await _repo.getTours();
-      _updateTourFavoriteStatus();
-      print('Yüklenen turlar: $tours');
+
+      // Her turun wishlist durumunu API'den gelen bilgiye göre güncelle
+      for (var tour in tours) {
+        tour.isFavorite = wishlistTourIds.contains(tour.tourId);
+      }
     } catch (e) {
-      errorMessage = 'Turlar yüklenirken hata oluştu: $e';
-      debugPrint('Error loading tours: $e');
+      errorMessage = 'Error loading tours: $e';
+      debugPrint(errorMessage);
     } finally {
       isLoading = false;
       notifyListeners();
@@ -115,29 +121,33 @@ class HomeViewModel extends ChangeNotifier {
     }
   }
 
-  Future<void> addTourToWishlist(int tourId) async {
+  Future<void> toggleWishlist(int tourId) async {
     try {
-      _favoriteTourIds.add(tourId);
-      _saveFavoriteTours();
-      await _repo.addTourToWishlist(tourId);
-      _updateTourFavoriteStatus(tourId);
-    } catch (e) {
-      errorMessage = 'Favorilere eklenirken hata oluştu: $e';
-      print("Error adding to wishlist : ${e}");
+      // Önce UI'ı güncelle - hem Popular hem de All Tours'da
+      for (var tour in tours) {
+        if (tour.tourId == tourId) {
+          tour.isFavorite = !tour.isFavorite;
+        }
+      }
       notifyListeners();
-    }
-  }
 
-  Future<void> removeTourFromWishlist(int tourId) async {
-    try {
-      _favoriteTourIds.remove(tourId);
-      _saveFavoriteTours();
-      await _repo.removeTourFromWishlist(tourId);
-      _updateTourFavoriteStatus(tourId);
+      // Sonra API çağrısı yap
+      if (_favoriteTourIds.contains(tourId)) {
+        await _repo.removeTourFromWishlist(tourId);
+        _favoriteTourIds.remove(tourId);
+      } else {
+        await _repo.addTourToWishlist(tourId);
+        _favoriteTourIds.add(tourId);
+      }
     } catch (e) {
-      errorMessage = 'Favorilerden çıkarılırken hata oluştu: $e';
-      print("Error removing from wishlist : ${e}");
+      // API hatası durumunda UI'ı eski haline getir
+      for (var tour in tours) {
+        if (tour.tourId == tourId) {
+          tour.isFavorite = !tour.isFavorite;
+        }
+      }
       notifyListeners();
+      print('Wishlist toggle error: $e');
     }
   }
 

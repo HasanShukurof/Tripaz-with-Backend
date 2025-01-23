@@ -2,35 +2,34 @@ import 'package:flutter/material.dart';
 
 class HeartButton extends StatefulWidget {
   final bool initialIsFavorite;
-  final VoidCallback onFavoriteChanged;
   final int tourId;
+  final Function() onFavoriteChanged;
 
-  const HeartButton(
-      {super.key,
-      required this.initialIsFavorite,
-      required this.onFavoriteChanged,
-      required this.tourId});
+  const HeartButton({
+    Key? key,
+    required this.initialIsFavorite,
+    required this.tourId,
+    required this.onFavoriteChanged,
+  }) : super(key: key);
 
   @override
-  _HeartButtonState createState() => _HeartButtonState();
+  State<HeartButton> createState() => _HeartButtonState();
 }
 
 class _HeartButtonState extends State<HeartButton> {
-  late bool _isFavorite;
+  late bool isFavorite;
 
   @override
   void initState() {
     super.initState();
-    _isFavorite = widget.initialIsFavorite;
+    isFavorite = widget.initialIsFavorite;
   }
 
   @override
   void didUpdateWidget(HeartButton oldWidget) {
     super.didUpdateWidget(oldWidget);
-    if (widget.initialIsFavorite != oldWidget.initialIsFavorite) {
-      setState(() {
-        _isFavorite = widget.initialIsFavorite;
-      });
+    if (oldWidget.initialIsFavorite != widget.initialIsFavorite) {
+      isFavorite = widget.initialIsFavorite;
     }
   }
 
@@ -38,10 +37,13 @@ class _HeartButtonState extends State<HeartButton> {
   Widget build(BuildContext context) {
     return IconButton(
       icon: Icon(
-        _isFavorite ? Icons.favorite_border : Icons.favorite,
-        color: _isFavorite ? Colors.white : Colors.red,
+        isFavorite ? Icons.favorite : Icons.favorite_border,
+        color: isFavorite ? Colors.red : Colors.white,
       ),
       onPressed: () {
+        setState(() {
+          isFavorite = !isFavorite;
+        });
         widget.onFavoriteChanged();
       },
     );

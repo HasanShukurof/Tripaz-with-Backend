@@ -8,7 +8,7 @@ import 'services/main_api_service.dart';
 import 'viewmodels/login_viewmodel.dart';
 import 'viewmodels/wish_list_view_model.dart';
 import 'views/login_screen.dart';
-import 'viewmodels/detail_booking_view_model.dart'; // DetailBookingViewModel import edildi
+import 'viewmodels/detail_booking_view_model.dart';
 
 void main() {
   runApp(

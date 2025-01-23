@@ -225,11 +225,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     initialIsFavorite: tour.isFavorite,
                     tourId: tour.tourId,
                     onFavoriteChanged: () {
-                      if (!tour.isFavorite) {
-                        homeViewModel.addTourToWishlist(tour.tourId);
-                      } else {
-                        homeViewModel.removeTourFromWishlist(tour.tourId);
-                      }
+                      homeViewModel.toggleWishlist(tour.tourId);
                     },
                   ),
                 ),
