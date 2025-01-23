@@ -25,9 +25,11 @@ class HomeViewModel extends ChangeNotifier {
       isLoading = true;
       notifyListeners();
 
+      // Önce wishlist turlarını al
       final wishlistTours = await _repo.getWishlistTours();
       final wishlistTourIds = wishlistTours.map((tour) => tour.tourId).toSet();
 
+      // Sonra tüm turları al
       tours = await _repo.getTours();
 
       // Her turun wishlist durumunu API'den gelen bilgiye göre güncelle
@@ -123,53 +125,19 @@ class HomeViewModel extends ChangeNotifier {
 
   Future<void> toggleWishlist(int tourId) async {
     try {
-      // Önce UI'ı güncelle - hem Popular hem de All Tours'da
-      for (var tour in tours) {
-        if (tour.tourId == tourId) {
-          tour.isFavorite = !tour.isFavorite;
-        }
-      }
-      notifyListeners();
-
-      // Sonra API çağrısı yap
+      // API çağrısını yap ama UI'ı güncellemek için bekleme
       if (_favoriteTourIds.contains(tourId)) {
-        await _repo.removeTourFromWishlist(tourId);
-        _favoriteTourIds.remove(tourId);
+        _repo.removeTourFromWishlist(tourId).then((_) {
+          _favoriteTourIds.remove(tourId);
+        });
       } else {
-        await _repo.addTourToWishlist(tourId);
-        _favoriteTourIds.add(tourId);
+        _repo.addTourToWishlist(tourId).then((_) {
+          _favoriteTourIds.add(tourId);
+        });
       }
     } catch (e) {
-      // API hatası durumunda UI'ı eski haline getir
-      for (var tour in tours) {
-        if (tour.tourId == tourId) {
-          tour.isFavorite = !tour.isFavorite;
-        }
-      }
-      notifyListeners();
       print('Wishlist toggle error: $e');
     }
-  }
-
-  void _updateTourFavoriteStatus([int? tourId]) {
-    if (tourId == null) {
-      for (var tour in tours) {
-        if (_favoriteTourIds.contains(tour.tourId)) {
-          tour.isFavorite = true;
-        } else {
-          tour.isFavorite = false;
-        }
-      }
-    } else {
-      final tour = tours.firstWhere((element) => element.tourId == tourId);
-      if (_favoriteTourIds.contains(tour.tourId)) {
-        tour.isFavorite = true;
-      } else {
-        tour.isFavorite = false;
-      }
-    }
-
-    notifyListeners();
   }
 
   Future<void> _loadFavoriteTours() async {
