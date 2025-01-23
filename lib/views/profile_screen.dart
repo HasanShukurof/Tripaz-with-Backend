@@ -8,6 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'dart:typed_data';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
+import 'booking_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, this.userId});
@@ -85,23 +86,33 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   const SizedBox(height: 30),
                   Image.asset('assets/images/divider.png'),
                   const SizedBox(height: 30),
-                  const Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.start,
-                        children: [
-                          Text('Booking'),
-                        ],
-                      ),
-                      Column(
-                        mainAxisAlignment: MainAxisAlignment.end,
-                        crossAxisAlignment: CrossAxisAlignment.end,
-                        children: [
-                          Icon(Icons.chevron_right),
-                        ],
-                      ),
-                    ],
+                  GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const BookingScreen(),
+                        ),
+                      );
+                    },
+                    child: const Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.start,
+                          children: [
+                            Text('Booking'),
+                          ],
+                        ),
+                        Column(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          crossAxisAlignment: CrossAxisAlignment.end,
+                          children: [
+                            Icon(Icons.chevron_right),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 30),
                   const Row(
