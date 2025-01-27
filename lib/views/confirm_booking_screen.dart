@@ -5,13 +5,16 @@ import 'payment_style_screen.dart';
 class ConfirmBookingScreen extends StatelessWidget {
   final String guestName;
   final String phone;
-  final int guestCount;
+  final String guestCount;
   final String autoType;
   final DateTime airportPickup;
   final DateTime startDate;
   final DateTime endDate;
   final int nightCount;
   final double totalPrice;
+  final bool isAirportPickup;
+  final TimeOfDay? pickupTime;
+  final String comment;
 
   const ConfirmBookingScreen({
     super.key,
@@ -24,6 +27,9 @@ class ConfirmBookingScreen extends StatelessWidget {
     required this.endDate,
     required this.nightCount,
     required this.totalPrice,
+    required this.isAirportPickup,
+    this.pickupTime,
+    required this.comment,
   });
 
   @override
@@ -65,7 +71,9 @@ class ConfirmBookingScreen extends StatelessWidget {
               _buildSummaryItem('Auto Type', autoType),
               _buildSummaryItem(
                 'Airport Pick-up',
-                '${airportPickup.day}/${airportPickup.month}/${airportPickup.year} ${airportPickup.hour}:${airportPickup.minute}',
+                isAirportPickup
+                    ? '${airportPickup.day}/${airportPickup.month}/${airportPickup.year} ${pickupTime?.format(context) ?? ""}'
+                    : 'Not selected',
               ),
               _buildSummaryItem(
                 'Tour Start Date',
@@ -77,6 +85,11 @@ class ConfirmBookingScreen extends StatelessWidget {
               ),
               _buildSummaryItem('Night Count', '$nightCount nights'),
               _buildSummaryItem('Total Price', '$totalPrice AZN'),
+              if (isAirportPickup && comment.isNotEmpty)
+                _buildSummaryItem(
+                  'Comment',
+                  comment,
+                ),
               const SizedBox(height: 40),
               SizedBox(
                 width: double.infinity,

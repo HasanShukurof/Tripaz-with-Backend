@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:intl_phone_field/intl_phone_field.dart';
 import 'package:provider/provider.dart';
 import 'package:tripaz_app/viewmodels/detail_booking_view_model.dart';
-import 'package:tripaz_app/views/home_screen.dart';
+import 'package:tripaz_app/views/confirm_booking_screen.dart';
 
 import '../models/car_type_model.dart';
 
@@ -551,14 +551,16 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
                                                 maxLines: null,
                                                 focusNode: _commentFocusNode,
                                                 keyboardType:
-                                                    TextInputType.name,
+                                                    TextInputType.multiline,
+                                                textInputAction:
+                                                    TextInputAction.newline,
                                                 controller: _commentController,
                                                 decoration: InputDecoration(
                                                   border: InputBorder.none,
                                                   hintText: _commentFocusNode
                                                           .hasFocus
                                                       ? ''
-                                                      : "For example: Terminal A",
+                                                      : "Heydar Aliyev Airport Terminal A",
                                                 ),
                                                 style: const TextStyle(
                                                     fontSize: 15),
@@ -709,11 +711,62 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
                                 (!isCheckedAirportPickUp ||
                                     (pickUpDate != null &&
                                         pickUpTime != null))) {
-                              print("Tüm alanlar dolu, geçiş yapılıyor.");
+                              // Log tüm field'leri
+                              print('\n=== Booking Details ===');
+                              print(
+                                  'Guest Name (String): ${_guestNameController.text}');
+                              print('Phone Number (String): $_completeNumber');
+                              print(
+                                  'Auto Type (String): ${viewModelConsumer.selectedCarName}');
+                              print(
+                                  'Guest Count (String): ${viewModel.carTypes.firstWhere(
+                                        (car) =>
+                                            car.carName ==
+                                            viewModel.selectedCarName,
+                                        orElse: () => CarTypeModel(),
+                                      ).carPersonCount}');
+                              print(
+                                  'Airport Pickup Enabled (bool): $isCheckedAirportPickUp');
+                              if (isCheckedAirportPickUp) {
+                                print('Pickup Date (DateTime): $pickUpDate');
+                                print('Pickup Time (TimeOfDay): $pickUpTime');
+                                print(
+                                    'Comment (String): ${_commentController.text}');
+                              }
+                              print('Tour Start Date (DateTime): $startDate');
+                              print('Tour End Date (DateTime): $endDate');
+                              print('Night Count (int): $dayDifference');
+                              print('Total Price (double): $resultAmount');
+                              print('====================\n');
+
                               Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                    builder: (context) => const HomeScreen(),
+                                    builder: (context) => ConfirmBookingScreen(
+                                      guestName: _guestNameController.text,
+                                      phone: _completeNumber!,
+                                      guestCount: viewModel.carTypes
+                                              .firstWhere(
+                                                (car) =>
+                                                    car.carName ==
+                                                    viewModel.selectedCarName,
+                                                orElse: () => CarTypeModel(),
+                                              )
+                                              .carPersonCount ??
+                                          '0 px',
+                                      autoType:
+                                          viewModelConsumer.selectedCarName!,
+                                      airportPickup: isCheckedAirportPickUp
+                                          ? pickUpDate!
+                                          : DateTime.now(),
+                                      startDate: startDate!,
+                                      endDate: endDate!,
+                                      nightCount: dayDifference!,
+                                      totalPrice: resultAmount,
+                                      isAirportPickup: isCheckedAirportPickUp,
+                                      pickupTime: pickUpTime,
+                                      comment: _commentController.text,
+                                    ),
                                   ));
                             } else {
                               showDialog(

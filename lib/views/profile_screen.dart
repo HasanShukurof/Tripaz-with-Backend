@@ -9,6 +9,7 @@ import 'dart:typed_data';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'login_screen.dart';
 import 'booking_screen.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, this.userId});
@@ -178,6 +179,37 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     ),
                   ),
+                  const SizedBox(height: 30),
+                  Image.asset('assets/images/divider.png'),
+                  const SizedBox(height: 30),
+                  const Text(
+                    'Contact Us',
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                  ),
+                  const SizedBox(height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                    children: [
+                      _buildSocialButton(
+                        icon: 'assets/images/instagram.png',
+                        onTap: () =>
+                            _launchUrl('https://www.instagram.com/tripaz.az/'),
+                      ),
+                      _buildSocialButton(
+                        icon: 'assets/images/facebook.jpeg',
+                        onTap: () => _launchUrl(
+                            'https://www.facebook.com/profile.php?id=61571571547943'),
+                      ),
+                      _buildSocialButton(
+                        icon: 'assets/images/email.jpeg',
+                        onTap: () => _launchUrl('mailto:info@tripaz.az'),
+                      ),
+                      _buildSocialButton(
+                        icon: 'assets/images/whatsapp.png',
+                        onTap: () => _launchUrl('https://wa.me/994501234567'),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 45),
                   GestureDetector(
                     onTap: () async {
@@ -262,6 +294,45 @@ class _ProfileScreenState extends State<ProfileScreen> {
       }
     } catch (e) {
       print("Error pick image : $e");
+    }
+  }
+
+  Widget _buildSocialButton({
+    required String icon,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        width: 60,
+        height: 60,
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(15),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.2),
+              spreadRadius: 2,
+              blurRadius: 5,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(15),
+          child: Image.asset(
+            icon,
+            width: 30,
+            height: 30,
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _launchUrl(String url) async {
+    if (!await launchUrl(Uri.parse(url))) {
+      throw Exception('Could not launch $url');
     }
   }
 }

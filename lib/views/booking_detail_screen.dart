@@ -139,13 +139,16 @@ class BookingDetailScreen extends StatelessWidget {
                             builder: (context) => ConfirmBookingScreen(
                               guestName: 'John Doe',
                               phone: '+994 50 123 45 67',
-                              guestCount: 2,
+                              guestCount: '2',
                               autoType: 'Sedan',
                               airportPickup: DateTime(2024, 3, 15, 14, 30),
                               startDate: DateTime(2024, 3, 16),
                               endDate: DateTime(2024, 3, 18),
                               nightCount: 2,
                               totalPrice: 150,
+                              isAirportPickup: true,
+                              pickupTime: TimeOfDay(hour: 14, minute: 30),
+                              comment: 'Terminal A',
                             ),
                           ),
                         );
