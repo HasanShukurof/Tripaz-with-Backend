@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:tripaz_app/viewmodels/home_view_model.dart';
 import '../models/tour_model.dart';
 import '../widgets/tour_card_homescreen.dart';
+import '../views/search_screen.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
@@ -116,25 +117,32 @@ class _HomeScreenState extends State<HomeScreen> {
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 10),
                           child: TextField(
-                            controller: _searchController,
-                            onChanged: _searchTours,
+                            readOnly: true, // Tıklanabilir ama yazılamaz
+                            onTap: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const SearchScreen(),
+                                ),
+                              );
+                            },
                             decoration: InputDecoration(
                               hintText: 'Search tours...',
                               prefixIcon: const Icon(Icons.search),
                               border: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide:
-                                    const BorderSide(color: Colors.grey),
+                                    BorderSide(color: Colors.grey.shade300),
                               ),
                               enabledBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide:
-                                    const BorderSide(color: Colors.grey),
+                                    BorderSide(color: Colors.grey.shade300),
                               ),
                               focusedBorder: OutlineInputBorder(
                                 borderRadius: BorderRadius.circular(10),
                                 borderSide:
-                                    const BorderSide(color: Colors.blue),
+                                    BorderSide(color: Colors.grey.shade300),
                               ),
                             ),
                           ),
@@ -156,7 +164,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                 ),
                               ),
                               SizedBox(
-                                height: 290,
+                                height: 300,
                                 child: ListView.builder(
                                   scrollDirection: Axis.horizontal,
                                   itemCount: popularTours.length,

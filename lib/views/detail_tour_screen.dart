@@ -18,6 +18,8 @@ class DetailTourScreen extends StatefulWidget {
 }
 
 class _DetailTourScreenState extends State<DetailTourScreen> {
+  bool _isExpanded = false;
+
   @override
   void initState() {
     super.initState();
@@ -124,14 +126,58 @@ class _DetailTourScreenState extends State<DetailTourScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           const Text(
-                            "About",
+                            'About',
                             style: TextStyle(
-                                fontWeight: FontWeight.bold, fontSize: 18),
+                              fontSize: 24,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
-                          const SizedBox(
-                            height: 15,
+                          const SizedBox(height: 16),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              AnimatedCrossFade(
+                                firstChild: Text(
+                                  tourDetails.tourAbout ?? '',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey.shade600,
+                                    height: 1.5,
+                                  ),
+                                  maxLines: 15,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                secondChild: Text(
+                                  tourDetails.tourAbout ?? '',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey.shade600,
+                                    height: 1.5,
+                                  ),
+                                ),
+                                crossFadeState: _isExpanded
+                                    ? CrossFadeState.showSecond
+                                    : CrossFadeState.showFirst,
+                                duration: const Duration(milliseconds: 300),
+                              ),
+                              if ((tourDetails.tourAbout?.length ?? 0) >
+                                  400) // Uzun metinler için
+                                TextButton(
+                                  onPressed: () {
+                                    setState(() {
+                                      _isExpanded = !_isExpanded;
+                                    });
+                                  },
+                                  child: Text(
+                                    _isExpanded ? 'Show Less' : 'Read More',
+                                    style: const TextStyle(
+                                      color: Colors.blue,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                            ],
                           ),
-                          Text(tourDetails.tourAbout ?? 'No Description'),
                           const SizedBox(
                             height: 35,
                           ),
