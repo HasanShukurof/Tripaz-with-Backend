@@ -105,7 +105,20 @@ class ConfirmBookingScreen extends StatelessWidget {
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => const PaymentStyleScreen(),
+                        builder: (context) => PaymentStyleScreen(
+                          guestName: guestName,
+                          phone: phone,
+                          autoType: 0,
+                          isAirportPickup: isAirportPickup,
+                          airportPickup: airportPickup,
+                          pickupTime: pickupTime,
+                          comment: comment,
+                          startDate: startDate,
+                          endDate: endDate,
+                          nightCount: nightCount,
+                          totalPrice: totalPrice,
+                          tourId: 1,
+                        ),
                       ),
                     );
                   },

@@ -8,6 +8,8 @@ import '../models/user_model.dart';
 import '../models/wishlist_tour_model.dart';
 import '../models/detail_booking_model.dart';
 import '../models/car_type_model.dart'; // CarTypeModel import edildi
+import '../models/payment_request_model.dart';
+import '../models/payment_response_model.dart';
 
 class MainApiService {
   final Dio _dio = Dio();
@@ -293,6 +295,29 @@ class MainApiService {
     } catch (e) {
       print("Registration error: ${e.toString()}");
       rethrow;
+    }
+  }
+
+  Future<PaymentResponseModel> createPayment(PaymentRequestModel model) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('access_token');
+
+    final response = await _dio.post(
+      'https://tripaz.az/api/Payriff/create-payment',
+      data: model.toJson(),
+      options: Options(
+        headers: {
+          'accept': 'text/plain',
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      ),
+    );
+
+    if (response.statusCode == 200) {
+      return PaymentResponseModel.fromJson(response.data);
+    } else {
+      throw Exception('Payment creation failed');
     }
   }
 }

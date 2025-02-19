@@ -1,8 +1,38 @@
 import 'package:flutter/material.dart';
 import 'empty_screen.dart';
+import 'webview_screen.dart';
+import '../models/payment_request_model.dart';
+import '../services/main_api_service.dart';
 
 class PaymentStyleScreen extends StatefulWidget {
-  const PaymentStyleScreen({super.key});
+  final String guestName;
+  final String phone;
+  final int autoType;
+  final bool isAirportPickup;
+  final DateTime airportPickup;
+  final TimeOfDay? pickupTime;
+  final String comment;
+  final DateTime startDate;
+  final DateTime endDate;
+  final int nightCount;
+  final double totalPrice;
+  final int tourId;
+
+  const PaymentStyleScreen({
+    super.key,
+    required this.guestName,
+    required this.phone,
+    required this.autoType,
+    required this.isAirportPickup,
+    required this.airportPickup,
+    this.pickupTime,
+    required this.comment,
+    required this.startDate,
+    required this.endDate,
+    required this.nightCount,
+    required this.totalPrice,
+    required this.tourId,
+  });
 
   @override
   State<PaymentStyleScreen> createState() => _PaymentStyleScreenState();
@@ -10,6 +40,7 @@ class PaymentStyleScreen extends StatefulWidget {
 
 class _PaymentStyleScreenState extends State<PaymentStyleScreen> {
   String? selectedPaymentMethod;
+  final MainApiService _mainApiService = MainApiService();
 
   @override
   Widget build(BuildContext context) {
@@ -93,13 +124,63 @@ class _PaymentStyleScreenState extends State<PaymentStyleScreen> {
                 ),
                 onPressed: selectedPaymentMethod == null
                     ? null
-                    : () {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const EmptyScreen(),
-                          ),
-                        );
+                    : () async {
+                        if (selectedPaymentMethod == 'cashless') {
+                          try {
+                            final response =
+                                await _mainApiService.createPayment(
+                              PaymentRequestModel(
+                                guestName: widget.guestName,
+                                phoneNumber: widget.phone,
+                                autoType: widget.autoType,
+                                airportPickupEnabled:
+                                    widget.isAirportPickup ? 1 : 0,
+                                pickupDate: widget.airportPickup,
+                                pickupTime:
+                                    widget.pickupTime?.format(context) ?? "",
+                                comment: widget.comment,
+                                tourStartDate: widget.startDate,
+                                tourEndDate: widget.endDate,
+                                nightCount: widget.nightCount,
+                                totalPrice: widget.totalPrice,
+                                tourId: widget.tourId,
+                                orderDate: DateTime.now(),
+                              ),
+                            );
+
+                            if (mounted) {
+                              print("Payment response: ${response.toJson()}");
+                              if (response.payload.paymentUrl.isNotEmpty) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => WebViewScreen(
+                                      paymentUrl: response.payload.paymentUrl,
+                                    ),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content:
+                                          Text('Invalid payment URL received')),
+                                );
+                              }
+                            }
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Payment error: $e')),
+                            );
+                          }
+                        } else {
+                          // Cash payment flow
+                          Navigator.pushReplacement(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const EmptyScreen(),
+                            ),
+                          );
+                        }
                       },
                 child: const Text(
                   'Next',
