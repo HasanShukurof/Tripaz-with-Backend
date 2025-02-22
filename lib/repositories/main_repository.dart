@@ -8,11 +8,16 @@ import '../models/user_model.dart';
 import '../models/wishlist_tour_model.dart';
 import '../models/detail_booking_model.dart';
 import '../models/car_type_model.dart'; // CarTypeModel import edildi
+import '../models/payment_request_model.dart';
+import '../models/payment_response_model.dart';
 
 class MainRepository {
   final MainApiService _mainApiService;
+  String? _lastOrderId; // OrderId'yi saklamak için
 
   MainRepository(this._mainApiService);
+
+  String? get lastOrderId => _lastOrderId;
 
   Future<UserLoginModel> login(String username, String password) async {
     return await _mainApiService.login(username, password);
@@ -128,5 +133,30 @@ class MainRepository {
       email: email,
       password: password,
     );
+  }
+
+  Future<PaymentResponseModel> createPayment(PaymentRequestModel model) async {
+    try {
+      final response = await _mainApiService.createPayment(model);
+      // OrderId'yi sakla
+      _lastOrderId = response.payload.orderId;
+      print('Payment OrderId saved: $_lastOrderId');
+      return response;
+    } catch (e) {
+      print('Payment creation error in repository: $e');
+      throw Exception('Payment creation failed: $e');
+    }
+  }
+
+  Future<dynamic> checkPaymentStatus(String orderId) async {
+    try {
+      final response = await _mainApiService.checkPaymentStatus(orderId);
+      print('Payment status checked for orderId: $orderId');
+      print('Payment status response: $response');
+      return response;
+    } catch (e) {
+      print('Payment status check error in repository: $e');
+      throw Exception('Payment status check failed: $e');
+    }
   }
 }

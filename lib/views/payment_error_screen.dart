@@ -40,7 +40,7 @@ class PaymentErrorScreen extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              errorMessage,
+              "Odenish edilmedi, yeniden cehd edin",
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontSize: 16,

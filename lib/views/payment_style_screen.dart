@@ -3,6 +3,8 @@ import 'empty_screen.dart';
 import 'webview_screen.dart';
 import '../models/payment_request_model.dart';
 import '../services/main_api_service.dart';
+import 'package:provider/provider.dart';
+import '../viewmodels/payment_view_model.dart';
 
 class PaymentStyleScreen extends StatefulWidget {
   final String guestName;
@@ -127,8 +129,11 @@ class _PaymentStyleScreenState extends State<PaymentStyleScreen> {
                     : () async {
                         if (selectedPaymentMethod == 'cashless') {
                           try {
+                            final paymentViewModel =
+                                Provider.of<PaymentViewModel>(context,
+                                    listen: false);
                             final response =
-                                await _mainApiService.createPayment(
+                                await paymentViewModel.createPayment(
                               PaymentRequestModel(
                                 guestName: widget.guestName,
                                 phoneNumber: widget.phone,
@@ -148,23 +153,28 @@ class _PaymentStyleScreenState extends State<PaymentStyleScreen> {
                               ),
                             );
 
-                            if (mounted) {
-                              print("Payment response: ${response.toJson()}");
-                              if (response.payload.paymentUrl.isNotEmpty) {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => WebViewScreen(
-                                      paymentUrl: response.payload.paymentUrl,
+                            if (response != null) {
+                              paymentViewModel
+                                  .setOrderId(response.payload.orderId);
+
+                              if (mounted) {
+                                print("Payment response: ${response.toJson()}");
+                                if (response.payload.paymentUrl.isNotEmpty) {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) => WebViewScreen(
+                                        paymentUrl: response.payload.paymentUrl,
+                                      ),
                                     ),
-                                  ),
-                                );
-                              } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  const SnackBar(
-                                      content:
-                                          Text('Invalid payment URL received')),
-                                );
+                                  );
+                                } else {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                        content: Text(
+                                            'Invalid payment URL received')),
+                                  );
+                                }
                               }
                             }
                           } catch (e) {

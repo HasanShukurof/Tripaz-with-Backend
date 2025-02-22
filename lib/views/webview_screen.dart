@@ -3,6 +3,9 @@ import 'package:webview_flutter/webview_flutter.dart';
 import 'dart:io' show Platform;
 import 'empty_screen.dart';
 import 'payment_error_screen.dart';
+import 'package:provider/provider.dart';
+import '../viewmodels/payment_view_model.dart';
+import 'booking_success_screen.dart';
 
 class WebViewScreen extends StatefulWidget {
   final String paymentUrl;
@@ -22,7 +25,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
   late final WebViewController _controller;
   bool _isLoading = true;
   bool _hasNavigatedAway = false;
-  late final Map<String, String> headers;
 
   void _handlePaymentError(String message, {bool isTimeout = false}) {
     if (!_hasNavigatedAway) {
@@ -44,13 +46,6 @@ class _WebViewScreenState extends State<WebViewScreen> {
     super.initState();
     print("Payment URL: ${widget.paymentUrl}");
 
-    headers = {
-      'Accept': '*/*',
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Cache-Control': 'no-cache',
-      'Pragma': 'no-cache',
-    };
-
     _controller = WebViewController()
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(Colors.white)
@@ -67,19 +62,13 @@ class _WebViewScreenState extends State<WebViewScreen> {
           },
           onWebResourceError: (WebResourceError error) {
             print("Web resource error: ${error.description}");
-            _handlePaymentError(
-              'An error occurred during the payment process. Please check your internet connection and try again.',
-            );
+            _handlePaymentError('Ödeme işlemi sırasında bir hata oluştu.');
           },
           onNavigationRequest: (NavigationRequest request) {
             print("Navigation request to: ${request.url}");
-            if (widget.successUrls.any((url) => request.url.contains(url))) {
-              _hasNavigatedAway = true;
-              Navigator.pushAndRemoveUntil(
-                context,
-                MaterialPageRoute(builder: (context) => const EmptyScreen()),
-                (route) => false,
-              );
+
+            if (request.url.contains('tripaz.az/api/Payriff/payment-status')) {
+              _checkPaymentStatus();
               return NavigationDecision.prevent;
             }
             return NavigationDecision.navigate;
@@ -88,6 +77,70 @@ class _WebViewScreenState extends State<WebViewScreen> {
       );
 
     _controller.loadRequest(Uri.parse(widget.paymentUrl));
+  }
+
+  void _checkPaymentStatus() async {
+    try {
+      final paymentViewModel =
+          Provider.of<PaymentViewModel>(context, listen: false);
+      final statusResponse = await paymentViewModel.checkPaymentStatus();
+
+      print('Payment Status Check Response in WebView:');
+      print('Full Response: $statusResponse');
+
+      if (statusResponse == null) {
+        throw Exception('Payment status response is null');
+      }
+
+      // Response'daki payment status'u direkt kontrol et
+      final paymentStatus = statusResponse['payload']?['paymentStatus'];
+      print('Payment Status: $paymentStatus');
+
+      if (mounted) {
+        if (paymentStatus == 'APPROVED') {
+          print('Payment is successful, navigating to success screen');
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(
+                builder: (context) => const BookingSuccessScreen()),
+            (route) => false,
+          );
+        } else {
+          print('Payment failed with status: $paymentStatus');
+          String errorMessage = 'Ödeme işlemi başarısız oldu.';
+          if (paymentStatus == 'DECLINED') {
+            errorMessage =
+                'Ödeme reddedildi. Lütfen başka bir kart ile tekrar deneyin.';
+          } else if (paymentStatus == 'PENDING') {
+            errorMessage =
+                'Ödeme işlemi beklemede. Lütfen daha sonra tekrar deneyin.';
+          }
+
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PaymentErrorScreen(
+                errorMessage: errorMessage,
+                isTimeout: false,
+              ),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      print('Error checking payment status: $e');
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const PaymentErrorScreen(
+              errorMessage: 'Ödeme durumu kontrol edilirken bir hata oluştu.',
+              isTimeout: false,
+            ),
+          ),
+        );
+      }
+    }
   }
 
   @override

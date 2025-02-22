@@ -320,4 +320,39 @@ class MainApiService {
       throw Exception('Payment creation failed');
     }
   }
+
+  Future<dynamic> checkPaymentStatus(String orderId) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('access_token');
+
+      print('Checking payment status with orderId: $orderId');
+      print('Using token: $token');
+
+      final response = await _dio.get(
+        'https://tripaz.az/api/Payriff/check-payment-status/$orderId',
+        options: Options(
+          headers: {
+            'accept': 'text/plain',
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          validateStatus: (status) => true, // Tüm status kodlarını kabul et
+        ),
+      );
+
+      print('API Response Status Code: ${response.statusCode}');
+      print('API Response Data: ${response.data}');
+
+      if (response.statusCode == 200) {
+        return response.data;
+      } else {
+        throw Exception(
+            'Payment status check failed with status ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Check Payment Status Error in API: $e');
+      rethrow;
+    }
+  }
 }

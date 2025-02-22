@@ -11,6 +11,7 @@ import 'viewmodels/detail_booking_view_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'views/onboarding_screen.dart';
 import 'widgets/bottom_navigation_bar.dart';
+import 'viewmodels/payment_view_model.dart';
 
 void main() {
   runApp(
@@ -59,6 +60,10 @@ void main() {
               WishlistViewModel(
                 Provider.of<MainRepository>(context, listen: false),
               ),
+        ),
+        ChangeNotifierProxyProvider<MainRepository, PaymentViewModel>(
+          create: (_) => PaymentViewModel(MainRepository(MainApiService())),
+          update: (_, mainRepo, __) => PaymentViewModel(mainRepo),
         ),
       ],
       child: const TripazApp(),
