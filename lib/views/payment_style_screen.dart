@@ -149,6 +149,7 @@ class _PaymentStyleScreenState extends State<PaymentStyleScreen> {
                                 nightCount: widget.nightCount,
                                 totalPrice: widget.totalPrice,
                                 tourId: widget.tourId,
+                                carId: 1,
                                 orderDate: DateTime.now(),
                               ),
                             );

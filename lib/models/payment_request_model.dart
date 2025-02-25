@@ -11,6 +11,7 @@ class PaymentRequestModel {
   final int nightCount;
   final double totalPrice;
   final int tourId;
+  final int carId;
   final DateTime orderDate;
 
   PaymentRequestModel({
@@ -26,6 +27,7 @@ class PaymentRequestModel {
     required this.nightCount,
     required this.totalPrice,
     required this.tourId,
+    required this.carId,
     required this.orderDate,
   });
 
@@ -42,6 +44,7 @@ class PaymentRequestModel {
         "nightCount": nightCount,
         "totalPrice": totalPrice,
         "tourId": tourId,
-        "orderDate": DateTime.now().toIso8601String(),
+        "carId": carId,
+        "orderDate": orderDate.toIso8601String(),
       };
 }
