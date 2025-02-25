@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'empty_screen.dart';
 import 'webview_screen.dart';
 import '../models/payment_request_model.dart';
-import '../services/main_api_service.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/payment_view_model.dart';
 
@@ -42,7 +41,6 @@ class PaymentStyleScreen extends StatefulWidget {
 
 class _PaymentStyleScreenState extends State<PaymentStyleScreen> {
   String? selectedPaymentMethod;
-  final MainApiService _mainApiService = MainApiService();
 
   @override
   Widget build(BuildContext context) {
