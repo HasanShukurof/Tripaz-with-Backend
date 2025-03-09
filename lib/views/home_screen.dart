@@ -107,7 +107,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: homeViewModel.isLoading
           ? const Center(child: CircularProgressIndicator())
           : homeViewModel.tours.isEmpty
-              ? const Center(child: Text('Henüz tur bulunamadı.'))
+              ? const Center(child: Text('No tour found yet.'))
               : Padding(
                   padding: const EdgeInsets.only(top: 20),
                   child: SingleChildScrollView(

@@ -40,7 +40,7 @@ class _WishListScreenState extends State<WishListScreen> {
       body: wishlistViewModel.isLoading
           ? const Center(child: CircularProgressIndicator())
           : wishlistViewModel.wishlistTours.isEmpty
-              ? const Center(child: Text('Favori tur bulunamadı.'))
+              ? const Center(child: Text('No favorite tour found.'))
               : ListView.separated(
                   padding: const EdgeInsets.all(10),
                   itemCount: wishlistViewModel.wishlistTours.length,

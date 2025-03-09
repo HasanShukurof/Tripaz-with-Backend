@@ -5,7 +5,7 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.INTERNET"/>
     <application
-        android:label="Tripaz"
+        android:label="TripAz"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
         android:usesCleartextTraffic="true"> <!--usesCleartextTraffic=true ekledim, internet adresleri http olabildigi icin-->
