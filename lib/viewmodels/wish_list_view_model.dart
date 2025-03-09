@@ -24,4 +24,16 @@ class WishlistViewModel extends ChangeNotifier {
       notifyListeners();
     }
   }
+
+  Future<void> removeTourFromWishlist(int tourId) async {
+    try {
+      await _repo.removeTourFromWishlist(tourId);
+      wishlistTours.removeWhere((tour) => tour.tourId == tourId);
+      notifyListeners();
+    } catch (e) {
+      errorMessage = 'Tur istek listesinden silinirken hata oluştu: $e';
+      debugPrint('Error removing tour from wishlist: $e');
+      notifyListeners();
+    }
+  }
 }

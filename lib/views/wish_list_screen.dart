@@ -55,6 +55,8 @@ class _WishListScreenState extends State<WishListScreen> {
   }
 
   Widget _buildTourCard(tour, context, defaultImageUrl) {
+    final wishlistViewModel =
+        Provider.of<WishlistViewModel>(context, listen: false);
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 10),
       child: InkWell(
@@ -134,6 +136,38 @@ class _WishListScreenState extends State<WishListScreen> {
                     ],
                   ),
                 ),
+              ),
+              // Silme butonu
+              IconButton(
+                icon: const Icon(Icons.delete_outline, color: Colors.red),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (BuildContext context) {
+                      return AlertDialog(
+                        title: const Text('Turu Sil'),
+                        content: const Text(
+                            'Are you sure you want to delete this tour from your wishlist?'),
+                        actions: <Widget>[
+                          TextButton(
+                            child: const Text('cancel'),
+                            onPressed: () {
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                          TextButton(
+                            child: const Text('Delete'),
+                            onPressed: () {
+                              wishlistViewModel
+                                  .removeTourFromWishlist(tour.tourId);
+                              Navigator.of(context).pop();
+                            },
+                          ),
+                        ],
+                      );
+                    },
+                  );
+                },
               ),
             ],
           ),

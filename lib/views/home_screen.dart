@@ -71,7 +71,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   if (homeViewModel.isUserLoading)
                     const Text("Loading User...")
                   else if (homeViewModel.errorMessage != null)
-                    Text("Error: ${homeViewModel.errorMessage}")
+                    Text("")
                   else if (homeViewModel.user != null)
                     Text(
                       'Welcome, ${homeViewModel.user!.userName}',
