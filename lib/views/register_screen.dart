@@ -20,7 +20,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Error'),
+        title: const Text('Attention'),
         content: Text(message),
         actions: [
           TextButton(
@@ -137,6 +137,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                                   backgroundColor: const Color(0XFFF39C4FF),
                                 ),
                                 onPressed: () async {
+                                  if (_passwordController.text.length < 6) {
+                                    _showErrorDialog(
+                                        'Password must be at least 6 characters.');
+                                    return;
+                                  }
                                   final success = await loginViewModel.register(
                                     username: _fullNameController.text,
                                     email: _emailController.text,
