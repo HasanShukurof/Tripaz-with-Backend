@@ -463,14 +463,14 @@ class _DetailTourScreenState extends State<DetailTourScreen> {
                     child: Row(
                       children: [
                         Text(
-                          "\$${tourDetails.tourPrice ?? '0'}",
+                          "${tourDetails.tourPrice ?? '0'} AZN",
                           style: const TextStyle(
                               color: Color(0XFFF0A7BAB),
                               fontSize: 21,
                               fontWeight: FontWeight.bold),
                         ),
                         const Text(
-                          "/ 1-3 pax",
+                          " / 1-3 pax",
                           style: TextStyle(color: Color(0XFFF0A7BAB)),
                         ),
                       ],

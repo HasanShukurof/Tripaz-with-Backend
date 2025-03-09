@@ -273,8 +273,9 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
                                     controller: _guestNameController,
                                     decoration: InputDecoration(
                                       border: InputBorder.none,
-                                      hintText:
-                                          _focusNode.hasFocus ? '' : "Jone",
+                                      hintText: _focusNode.hasFocus
+                                          ? ''
+                                          : "Edit name",
                                     ),
                                     style: const TextStyle(fontSize: 15),
                                   ),
@@ -373,14 +374,11 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
                                         BorderSide(color: Colors.grey.shade300),
                                   ),
                                   focusedBorder: const OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Colors
-                                            .blue), // Focus edildiğinde renk
+                                    borderSide: BorderSide(color: Colors.blue),
                                   ),
                                   enabledBorder: OutlineInputBorder(
-                                    borderSide: BorderSide(
-                                        color: Colors.grey
-                                            .shade300), // Normal durumda renk
+                                    borderSide:
+                                        BorderSide(color: Colors.grey.shade300),
                                   ),
                                 ),
                                 style: const TextStyle(fontSize: 15),
@@ -390,6 +388,10 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
                                         phoneNumber.completeNumber;
                                   });
                                 },
+                                keyboardType: TextInputType.number,
+                                invalidNumberMessage:
+                                    'Geçersiz telefon numarası',
+                                initialCountryCode: 'AE',
                               ),
                               Row(
                                 children: [

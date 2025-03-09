@@ -206,7 +206,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ),
                       _buildSocialButton(
                         icon: 'assets/images/whatsapp.png',
-                        onTap: () => _launchUrl('https://wa.me/994501234567'),
+                        onTap: () => _launchUrl('https://wa.me/994102651470'),
                       ),
                     ],
                   ),
