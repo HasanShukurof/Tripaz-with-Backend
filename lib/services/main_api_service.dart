@@ -44,6 +44,9 @@ class MainApiService {
         print("Login successful - Token saved");
         return UserLoginModel.fromJson(response.data);
       } else {
+        if (response.statusCode == 401) {
+          throw Exception(response.data);
+        }
         final errorMessage = response.data['errors']?['Email']?.first ??
             response.data['message'] ??
             'Login failed';

@@ -22,12 +22,27 @@ class _LogInScreenState extends State<LoginScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Error'),
-        content: Text(message),
+        title: const Text(
+          'Error',
+          style: TextStyle(
+            color: Colors.red,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        content: Text(
+          message,
+          style: const TextStyle(fontSize: 16),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.of(ctx).pop(),
-            child: const Text('OK'),
+            child: const Text(
+              'OK',
+              style: TextStyle(
+                color: Colors.red,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
           ),
         ],
       ),
@@ -49,11 +64,15 @@ class _LogInScreenState extends State<LoginScreen> {
           MaterialPageRoute(builder: (context) => const BottomNavBar()),
         );
       } else if (mounted) {
-        _showErrorDialog(loginViewModel.errorMessage ?? 'Login failed.');
+        String errorMessage = loginViewModel.errorMessage ?? 'Login failed.';
+        errorMessage = errorMessage.replaceAll('Exception: ', '');
+        _showErrorDialog(errorMessage);
       }
     } catch (e) {
       if (mounted) {
-        _showErrorDialog('An error occurred during login.');
+        String errorMessage = e.toString();
+        errorMessage = errorMessage.replaceAll('Exception: ', '');
+        _showErrorDialog(errorMessage);
       }
     }
   }
