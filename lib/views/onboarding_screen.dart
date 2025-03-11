@@ -18,17 +18,17 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
     OnboardingModel(
       title: "Discover Amazing Places",
       description: "Find the best tours and adventures in Azerbaijan",
-      image: "assets/images/onboarding1.jpeg",
+      image: "assets/images/onboarding1.jpg",
     ),
     OnboardingModel(
       title: "Easy Booking",
       description: "Book your tour with just a few clicks",
-      image: "assets/images/onboarding2.jpeg",
+      image: "assets/images/onboarding2.jpg",
     ),
     OnboardingModel(
       title: "Start Your Journey",
       description: "Begin your adventure with Tripaz",
-      image: "assets/images/onboarding3.jpeg",
+      image: "assets/images/onboarding3.jpg",
     ),
   ];
 

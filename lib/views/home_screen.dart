@@ -83,7 +83,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     )
                   else
                     const Text(
-                      'Welcome, User',
+                      'Welcome',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 16,

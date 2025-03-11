@@ -355,4 +355,26 @@ class MainApiService {
       rethrow;
     }
   }
+
+  Future<void> deleteUser(String token) async {
+    try {
+      final response = await _dio.post(
+        'https://tripaz.az/api/Users/deleteUser',
+        options: Options(
+          headers: {
+            'accept': 'text/plain',
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+        ),
+      );
+
+      if (response.statusCode != 200) {
+        throw Exception('Hesap silme işlemi başarısız oldu');
+      }
+    } catch (e) {
+      print('Delete User Error: $e');
+      rethrow;
+    }
+  }
 }

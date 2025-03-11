@@ -54,38 +54,30 @@ class HomeViewModel extends ChangeNotifier {
     try {
       isUserLoading = true;
       notifyListeners();
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? cachedUserName = prefs.getString('user_name');
-      String? cachedProfileImageUrl = prefs.getString('profile_image_url');
-
-      if (cachedUserName != null) {
-        user = UserModel(
-            userName: cachedUserName, profileImageUrl: cachedProfileImageUrl);
-        print(
-            'Kullanıcı bilgileri SharedPreferences\'dan alındı: ${user?.userName}');
-        notifyListeners();
-      }
-
-      try {
-        final fetchedUser = await _repo.getUser();
-        user = fetchedUser;
-
-        await prefs.setString('user_name', user!.userName!);
-        if (user!.profileImageUrl != null) {
-          await prefs.setString('profile_image_url', user!.profileImageUrl!);
-        }
-
-        print(
-            'Kullanıcı bilgileri API\'den alındı ve SharedPreferences\'a kaydedildi: ${user?.userName}');
-        notifyListeners();
-      } catch (e) {
-        errorMessage = 'Kullanıcı bilgileri yüklenirken hata oluştu: $e';
-        debugPrint('Error fetching user: $e');
-        notifyListeners();
-      }
+      user = await _repo.getUser();
+      _isUserLoaded = true;
+    } catch (e) {
+      errorMessage = 'Error loading user: $e';
+      debugPrint(errorMessage);
     } finally {
       isUserLoading = false;
-      _isUserLoaded = true;
+      notifyListeners();
+    }
+  }
+
+  Future<void> deleteUser() async {
+    try {
+      isUserLoading = true;
+      notifyListeners();
+      await _repo.deleteUser();
+      user = null;
+      _isUserLoaded = false;
+    } catch (e) {
+      errorMessage = 'Hesap silme işlemi başarısız oldu: $e';
+      debugPrint(errorMessage);
+      rethrow;
+    } finally {
+      isUserLoading = false;
       notifyListeners();
     }
   }

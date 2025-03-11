@@ -159,4 +159,14 @@ class MainRepository {
       throw Exception('Payment status check failed: $e');
     }
   }
+
+  Future<void> deleteUser() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('access_token');
+
+    if (token == null || token.isEmpty) {
+      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+    }
+    return await _mainApiService.deleteUser(token);
+  }
 }
