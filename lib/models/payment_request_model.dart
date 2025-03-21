@@ -13,6 +13,8 @@ class PaymentRequestModel {
   final int tourId;
   final int carId;
   final DateTime orderDate;
+  final int cashOrCahless;
+  final double payAmount;
 
   PaymentRequestModel({
     required this.guestName,
@@ -29,6 +31,8 @@ class PaymentRequestModel {
     required this.tourId,
     required this.carId,
     required this.orderDate,
+    required this.cashOrCahless,
+    required this.payAmount,
   });
 
   Map<String, dynamic> toJson() => {
@@ -46,5 +50,7 @@ class PaymentRequestModel {
         "tourId": tourId,
         "carId": carId,
         "orderDate": orderDate.toIso8601String(),
+        "cashOrCahless": cashOrCahless,
+        "payAmount": payAmount,
       };
 }

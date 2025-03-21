@@ -100,7 +100,7 @@ class _PaymentStyleScreenState extends State<PaymentStyleScreen> {
                     SizedBox(width: 12),
                     Expanded(
                       child: Text(
-                        'You must pay 10% in advance for booking',
+                        'You must pay 30% in advance for booking',
                         style: TextStyle(
                           color: Colors.black87,
                           fontSize: 14,
@@ -125,69 +125,74 @@ class _PaymentStyleScreenState extends State<PaymentStyleScreen> {
                 onPressed: selectedPaymentMethod == null
                     ? null
                     : () async {
-                        if (selectedPaymentMethod == 'cashless') {
-                          try {
-                            final paymentViewModel =
-                                Provider.of<PaymentViewModel>(context,
-                                    listen: false);
-                            final response =
-                                await paymentViewModel.createPayment(
-                              PaymentRequestModel(
-                                guestName: widget.guestName,
-                                phoneNumber: widget.phone,
-                                autoType: widget.autoType,
-                                airportPickupEnabled:
-                                    widget.isAirportPickup ? 1 : 0,
-                                pickupDate: widget.airportPickup,
-                                pickupTime:
-                                    widget.pickupTime?.format(context) ?? "",
-                                comment: widget.comment,
-                                tourStartDate: widget.startDate,
-                                tourEndDate: widget.endDate,
-                                nightCount: widget.nightCount,
-                                totalPrice: widget.totalPrice,
-                                tourId: widget.tourId,
-                                carId: 1,
-                                orderDate: DateTime.now(),
-                              ),
-                            );
+                        try {
+                          // Ödeme türüne göre değerleri ayarla
+                          int cashOrCahless = 0;
+                          double payAmount = 0;
 
-                            if (response != null) {
-                              paymentViewModel
-                                  .setOrderId(response.payload.orderId);
+                          if (selectedPaymentMethod == 'cash') {
+                            // Nakit ödeme: toplam tutarın %30'u
+                            cashOrCahless = 1;
+                            payAmount = widget.totalPrice * 0.3;
+                          } else {
+                            // Nakitsiz ödeme: toplam tutarın %100'ü
+                            cashOrCahless = 2;
+                            payAmount = widget.totalPrice;
+                          }
 
-                              if (mounted) {
-                                print("Payment response: ${response.toJson()}");
-                                if (response.payload.paymentUrl.isNotEmpty) {
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) => WebViewScreen(
-                                        paymentUrl: response.payload.paymentUrl,
-                                      ),
+                          final paymentViewModel =
+                              Provider.of<PaymentViewModel>(context,
+                                  listen: false);
+                          final response = await paymentViewModel.createPayment(
+                            PaymentRequestModel(
+                              guestName: widget.guestName,
+                              phoneNumber: widget.phone,
+                              autoType: widget.autoType,
+                              airportPickupEnabled:
+                                  widget.isAirportPickup ? 1 : 0,
+                              pickupDate: widget.airportPickup,
+                              pickupTime:
+                                  widget.pickupTime?.format(context) ?? "",
+                              comment: widget.comment,
+                              tourStartDate: widget.startDate,
+                              tourEndDate: widget.endDate,
+                              nightCount: widget.nightCount,
+                              totalPrice: widget.totalPrice,
+                              tourId: widget.tourId,
+                              carId: 1,
+                              orderDate: DateTime.now(),
+                              cashOrCahless: cashOrCahless,
+                              payAmount: payAmount,
+                            ),
+                          );
+
+                          if (response != null) {
+                            paymentViewModel
+                                .setOrderId(response.payload.orderId);
+
+                            if (mounted) {
+                              print("Payment response: ${response.toJson()}");
+                              if (response.payload.paymentUrl.isNotEmpty) {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => WebViewScreen(
+                                      paymentUrl: response.payload.paymentUrl,
                                     ),
-                                  );
-                                } else {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                        content: Text(
-                                            'Invalid payment URL received')),
-                                  );
-                                }
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  const SnackBar(
+                                      content:
+                                          Text('Invalid payment URL received')),
+                                );
                               }
                             }
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Payment error: $e')),
-                            );
                           }
-                        } else {
-                          // Cash payment flow
-                          Navigator.pushReplacement(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const EmptyScreen(),
-                            ),
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(content: Text('Payment error: $e')),
                           );
                         }
                       },
