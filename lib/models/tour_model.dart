@@ -6,6 +6,7 @@ class TourModel {
   final List<TourImage> tourImages;
   final String? tourAbout;
   final List<Wishlist> wishlists;
+  final List<Car> cars;
   bool isFavorite;
 
   TourModel(
@@ -16,6 +17,7 @@ class TourModel {
       required this.tourImages,
       this.tourAbout,
       required this.wishlists,
+      required this.cars,
       this.isFavorite = false});
 
   factory TourModel.fromJson(Map<String, dynamic> json) {
@@ -32,6 +34,10 @@ class TourModel {
               ?.map((wishlist) => Wishlist.fromJson(wishlist))
               .toList() ??
           [],
+      cars: (json['cars'] as List<dynamic>?)
+              ?.map((car) => Car.fromJson(car))
+              .toList() ??
+          [],
     );
   }
 }
@@ -40,11 +46,13 @@ class TourImage {
   final int tourImagesId;
   final String tourImageName;
   final int isMainImage;
+  final int? tourId;
 
   TourImage({
     required this.tourImagesId,
     required this.tourImageName,
     required this.isMainImage,
+    this.tourId,
   });
 
   factory TourImage.fromJson(Map<String, dynamic> json) {
@@ -52,6 +60,7 @@ class TourImage {
       tourImagesId: json['tourImagesId'],
       tourImageName: json['tourImgageName'],
       isMainImage: json['isMainImage'],
+      tourId: json['tourId'],
     );
   }
 }
@@ -72,6 +81,35 @@ class Wishlist {
       wishlistId: json['wishlistId'],
       tourId: json['tourId'],
       userId: json['userId'],
+    );
+  }
+}
+
+class Car {
+  final int carId;
+  final String carName;
+  final double carPrice;
+  final String carPersonCount;
+  final int tourId;
+  final int carStatus;
+
+  Car({
+    required this.carId,
+    required this.carName,
+    required this.carPrice,
+    required this.carPersonCount,
+    required this.tourId,
+    required this.carStatus,
+  });
+
+  factory Car.fromJson(Map<String, dynamic> json) {
+    return Car(
+      carId: json['carId'],
+      carName: json['carName'],
+      carPrice: (json['carPrice'] as num).toDouble(),
+      carPersonCount: json['carPersonCount'],
+      tourId: json['tourId'],
+      carStatus: json['carStatus'],
     );
   }
 }

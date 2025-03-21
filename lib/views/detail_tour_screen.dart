@@ -6,6 +6,8 @@ import 'package:tripaz_app/services/main_api_service.dart';
 import 'package:tripaz_app/viewmodels/detail_tour_view_model.dart';
 import 'package:tripaz_app/views/detail_booking_screen.dart';
 import 'package:tripaz_app/views/full_screen_image.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:tripaz_app/views/login_screen.dart';
 import 'dart:convert';
 
 class DetailTourScreen extends StatefulWidget {
@@ -478,13 +480,58 @@ class _DetailTourScreenState extends State<DetailTourScreen> {
                   ),
                   Expanded(
                     child: GestureDetector(
-                      onTap: () => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) =>
-                              DetailBookingScreen(tourId: widget.tourId),
-                        ),
-                      ),
+                      onTap: () async {
+                        // Kullanıcı giriş durumunu kontrol et
+                        final SharedPreferences prefs =
+                            await SharedPreferences.getInstance();
+                        final bool isLoggedIn =
+                            prefs.getString('access_token') != null;
+
+                        if (isLoggedIn) {
+                          // Kullanıcı giriş yapmışsa, booking sayfasına yönlendir
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) =>
+                                  DetailBookingScreen(tourId: widget.tourId),
+                            ),
+                          );
+                        } else {
+                          // Kullanıcı giriş yapmamışsa, login gerekliliği hakkında bilgilendir
+                          showDialog(
+                            context: context,
+                            builder: (BuildContext context) {
+                              return AlertDialog(
+                                title: const Text('Login Required'),
+                                content: const Text(
+                                    'You must log in to add to favorites.'),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context)
+                                          .pop(); // Dialog'u kapat
+                                    },
+                                    child: const Text('Cancel'),
+                                  ),
+                                  TextButton(
+                                    onPressed: () {
+                                      Navigator.of(context)
+                                          .pop(); // Dialog'u kapat
+                                      Navigator.push(
+                                        context,
+                                        MaterialPageRoute(
+                                            builder: (context) =>
+                                                const LoginScreen()),
+                                      );
+                                    },
+                                    child: const Text('Login'),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        }
+                      },
                       child: const Card(
                         color: Color(0XFFF0FA3E2),
                         child: SizedBox(

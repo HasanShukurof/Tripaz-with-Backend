@@ -25,16 +25,28 @@ class HomeViewModel extends ChangeNotifier {
       isLoading = true;
       notifyListeners();
 
-      // Önce wishlist turlarını al
-      final wishlistTours = await _repo.getWishlistTours();
-      final wishlistTourIds = wishlistTours.map((tour) => tour.tourId).toSet();
+      // Tüm turları al (token olmadan)
+      tours = await _repo.getPublicTours();
 
-      // Sonra tüm turları al
-      tours = await _repo.getTours();
+      // Kullanıcı giriş yapmışsa wishlist durumunu kontrol et
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('access_token');
 
-      // Her turun wishlist durumunu API'den gelen bilgiye göre güncelle
-      for (var tour in tours) {
-        tour.isFavorite = wishlistTourIds.contains(tour.tourId);
+      if (token != null && token.isNotEmpty) {
+        try {
+          // Wishlist turlarını al
+          final wishlistTours = await _repo.getWishlistTours();
+          final wishlistTourIds =
+              wishlistTours.map((tour) => tour.tourId).toSet();
+
+          // Her turun wishlist durumunu API'den gelen bilgiye göre güncelle
+          for (var tour in tours) {
+            tour.isFavorite = wishlistTourIds.contains(tour.tourId);
+          }
+        } catch (e) {
+          // Wishlist hatası olsa bile turları göstermeye devam et
+          print('Wishlist yüklenirken hata: $e');
+        }
       }
     } catch (e) {
       errorMessage = 'Error loading tours: $e';
@@ -117,6 +129,15 @@ class HomeViewModel extends ChangeNotifier {
 
   Future<void> toggleWishlist(int tourId) async {
     try {
+      // Önce kullanıcının giriş yapıp yapmadığını kontrol et
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('access_token');
+
+      if (token == null || token.isEmpty) {
+        // Kullanıcı giriş yapmamışsa işlem yapma
+        return;
+      }
+
       // API çağrısını yap ama UI'ı güncellemek için bekleme
       if (_favoriteTourIds.contains(tourId)) {
         _repo.removeTourFromWishlist(tourId).then((_) {

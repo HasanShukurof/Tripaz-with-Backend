@@ -169,4 +169,12 @@ class MainRepository {
     }
     return await _mainApiService.deleteUser(token);
   }
+
+  Future<List<TourModel>> getPublicTours() async {
+    return await _mainApiService.fetchPublicTours();
+  }
+
+  Future<DetailTourModel> getPublicTourDetails(int tourId) async {
+    return await _mainApiService.fetchPublicTourDetails(tourId);
+  }
 }

@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../views/login_screen.dart';
 
 class HeartButton extends StatefulWidget {
   final bool initialIsFavorite;
@@ -40,11 +42,50 @@ class _HeartButtonState extends State<HeartButton> {
         isFavorite ? Icons.favorite : Icons.favorite_border,
         color: isFavorite ? Colors.red : Colors.white,
       ),
-      onPressed: () {
-        setState(() {
-          isFavorite = !isFavorite;
-        });
-        widget.onFavoriteChanged();
+      onPressed: () async {
+        // Kullanıcının giriş yapıp yapmadığını kontrol et
+        final prefs = await SharedPreferences.getInstance();
+        final isLoggedIn = prefs.getString('access_token') != null;
+
+        if (isLoggedIn) {
+          // Kullanıcı giriş yapmışsa, favorileri güncelle
+          setState(() {
+            isFavorite = !isFavorite;
+          });
+          widget.onFavoriteChanged();
+        } else {
+          // Kullanıcı giriş yapmamışsa, login gerekliliği hakkında bilgilendir
+          if (context.mounted) {
+            showDialog(
+              context: context,
+              builder: (BuildContext context) {
+                return AlertDialog(
+                  title: const Text('Login Required'),
+                  content: const Text('You must log in to add to favorites.'),
+                  actions: [
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Dialog'u kapat
+                      },
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.of(context).pop(); // Dialog'u kapat
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                              builder: (context) => const LoginScreen()),
+                        );
+                      },
+                      child: const Text('Login'),
+                    ),
+                  ],
+                );
+              },
+            );
+          }
+        }
       },
     );
   }

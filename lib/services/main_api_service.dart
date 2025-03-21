@@ -380,4 +380,51 @@ class MainApiService {
       rethrow;
     }
   }
+
+  Future<List<TourModel>> fetchPublicTours() async {
+    try {
+      final response = await _dio.get(
+        'https://tripaz.az/api/Tour/ios/tours',
+        options: Options(headers: {
+          'Content-Type': 'application/json',
+        }),
+      );
+
+      print('Public API Yanıtı: ${response.data}');
+
+      if (response.statusCode == 200) {
+        List<dynamic> data = response.data;
+        final tourList = data.map((tour) => TourModel.fromJson(tour)).toList();
+        return tourList;
+      } else {
+        throw Exception('Failed to load tours');
+      }
+    } catch (e) {
+      print('Public tour fetch error: $e');
+      throw Exception('Failed to load tours: $e');
+    }
+  }
+
+  Future<DetailTourModel> fetchPublicTourDetails(int tourId) async {
+    try {
+      final response = await _dio.post(
+        'https://tripaz.az/api/Tour/ios/$tourId',
+        options: Options(headers: {
+          'accept': 'text/plain',
+          'Content-Type': 'application/json',
+        }),
+      );
+
+      if (response.statusCode == 200) {
+        print("Public Tour details: ${response.data}");
+        return DetailTourModel.fromJson(response.data);
+      } else {
+        print('API Error: ${response.statusCode} - ${response.statusMessage}');
+        throw Exception('Failed to load tour details');
+      }
+    } catch (e) {
+      print('Public tour detail fetch error: $e');
+      throw Exception('Failed to load tour details: $e');
+    }
+  }
 }
