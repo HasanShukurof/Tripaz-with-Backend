@@ -4,6 +4,7 @@ import 'package:tripaz_app/viewmodels/detail_tour_view_model.dart';
 import 'package:tripaz_app/viewmodels/home_view_model.dart';
 import 'repositories/main_repository.dart';
 import 'services/main_api_service.dart';
+import 'services/cache_service.dart';
 import 'viewmodels/login_viewmodel.dart';
 import 'viewmodels/wish_list_view_model.dart';
 import 'views/login_screen.dart';
@@ -15,71 +16,84 @@ import 'widgets/bottom_navigation_bar.dart';
 import 'viewmodels/payment_view_model.dart';
 
 void main() {
-  runApp(
-    MultiProvider(
-      providers: [
-        // AuthService sağlayıcısı
-        Provider(create: (_) => MainApiService()),
+  WidgetsFlutterBinding.ensureInitialized(); // Flutter binding'i başlat
 
-        // AuthRepository, AuthService'e bağımlı
-        ProxyProvider<MainApiService, MainRepository>(
-          update: (_, mainApiService, __) => MainRepository(mainApiService),
-        ),
+  // Uygulamayı başlatırken önbelleği temizle
+  final cacheService = CacheService();
+  cacheService.clearAllCache().then((_) {
+    print('Uygulama başlangıcında önbellek temizlendi');
 
-        // LoginViewModel, AuthRepository'ye bağımlı
-        ChangeNotifierProxyProvider<MainRepository, LoginViewModel>(
-          create: (_) =>
-              LoginViewModel(MainRepository(MainApiService())), // İlk başlatma
-          update: (_, authRepository, __) => LoginViewModel(authRepository),
-        ),
+    runApp(
+      MultiProvider(
+        providers: [
+          // API ve Cache Servisleri
+          Provider(create: (_) => MainApiService()),
+          Provider(create: (_) => CacheService()),
 
-        // HomeViewModel'in eklenmesi
-        ChangeNotifierProxyProvider<MainRepository, HomeViewModel>(
-          create: (_) => HomeViewModel(MainRepository(MainApiService())),
-          update: (_, mainRepository, __) => HomeViewModel(mainRepository),
-        ),
-        ChangeNotifierProvider(
-          create: (context) =>
-              DetailTourViewModel(MainRepository(MainApiService())),
-        ),
-        ChangeNotifierProxyProvider<MainRepository, DetailBookingViewModel>(
-          create: (context) => DetailBookingViewModel(
-            Provider.of<MainRepository>(context, listen: false),
+          // MainRepository, servislerine bağımlı
+          ProxyProvider2<MainApiService, CacheService, MainRepository>(
+            update: (_, mainApiService, cacheService, __) =>
+                MainRepository(mainApiService, cacheService),
           ),
-          update: (context, mainRepo, previousDetailBookingViewModel) =>
-              previousDetailBookingViewModel ??
-              DetailBookingViewModel(
-                Provider.of<MainRepository>(context, listen: false),
-              ),
-        ),
-        ChangeNotifierProxyProvider<MainRepository, BookingViewModel>(
-          create: (context) => BookingViewModel(
-            Provider.of<MainRepository>(context, listen: false),
+
+          // LoginViewModel, MainRepository'ye bağımlı
+          ChangeNotifierProxyProvider<MainRepository, LoginViewModel>(
+            create: (_) => LoginViewModel(
+                MainRepository(MainApiService(), CacheService())),
+            update: (_, mainRepository, __) => LoginViewModel(mainRepository),
           ),
-          update: (context, mainRepo, previousBookingViewModel) =>
-              previousBookingViewModel ??
-              BookingViewModel(
-                Provider.of<MainRepository>(context, listen: false),
-              ),
-        ),
-        ChangeNotifierProxyProvider<MainRepository, WishlistViewModel>(
-          create: (context) => WishlistViewModel(
-            Provider.of<MainRepository>(context, listen: false),
+
+          // HomeViewModel'in eklenmesi
+          ChangeNotifierProxyProvider<MainRepository, HomeViewModel>(
+            create: (_) =>
+                HomeViewModel(MainRepository(MainApiService(), CacheService())),
+            update: (_, mainRepository, __) => HomeViewModel(mainRepository),
           ),
-          update: (context, mainRepo, previousWishlistViewModel) =>
-              previousWishlistViewModel ??
-              WishlistViewModel(
-                Provider.of<MainRepository>(context, listen: false),
-              ),
-        ),
-        ChangeNotifierProxyProvider<MainRepository, PaymentViewModel>(
-          create: (_) => PaymentViewModel(MainRepository(MainApiService())),
-          update: (_, mainRepo, __) => PaymentViewModel(mainRepo),
-        ),
-      ],
-      child: const TripazApp(),
-    ),
-  );
+          ChangeNotifierProvider(
+            create: (context) => DetailTourViewModel(MainRepository(
+                MainApiService(),
+                Provider.of<CacheService>(context, listen: false))),
+          ),
+          ChangeNotifierProxyProvider<MainRepository, DetailBookingViewModel>(
+            create: (context) => DetailBookingViewModel(
+              Provider.of<MainRepository>(context, listen: false),
+            ),
+            update: (context, mainRepo, previousDetailBookingViewModel) =>
+                previousDetailBookingViewModel ??
+                DetailBookingViewModel(
+                  Provider.of<MainRepository>(context, listen: false),
+                ),
+          ),
+          ChangeNotifierProxyProvider<MainRepository, BookingViewModel>(
+            create: (context) => BookingViewModel(
+              Provider.of<MainRepository>(context, listen: false),
+            ),
+            update: (context, mainRepo, previousBookingViewModel) =>
+                previousBookingViewModel ??
+                BookingViewModel(
+                  Provider.of<MainRepository>(context, listen: false),
+                ),
+          ),
+          ChangeNotifierProxyProvider<MainRepository, WishlistViewModel>(
+            create: (context) => WishlistViewModel(
+              Provider.of<MainRepository>(context, listen: false),
+            ),
+            update: (context, mainRepo, previousWishlistViewModel) =>
+                previousWishlistViewModel ??
+                WishlistViewModel(
+                  Provider.of<MainRepository>(context, listen: false),
+                ),
+          ),
+          ChangeNotifierProxyProvider<MainRepository, PaymentViewModel>(
+            create: (_) => PaymentViewModel(
+                MainRepository(MainApiService(), CacheService())),
+            update: (_, mainRepo, __) => PaymentViewModel(mainRepo),
+          ),
+        ],
+        child: const TripazApp(),
+      ),
+    );
+  });
 }
 
 class TripazApp extends StatelessWidget {

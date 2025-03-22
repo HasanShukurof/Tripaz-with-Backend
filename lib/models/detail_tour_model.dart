@@ -26,6 +26,16 @@ class DetailTourModel {
           .toList(),
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'tourId': tourId,
+      'tourName': tourName,
+      'tourPrice': tourPrice,
+      'tourAbout': tourAbout,
+      'tourImages': tourImages?.map((image) => image.toJson()).toList(),
+    };
+  }
 }
 
 class TourImage {
@@ -51,5 +61,15 @@ class TourImage {
       tourId: json['tourId'],
       isMainImage: json['isMainImage'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'tourImagesId': tourImagesId,
+      'tourImgageName': tourImgageName,
+      'tour': tour,
+      'tourId': tourId,
+      'isMainImage': isMainImage,
+    };
   }
 }

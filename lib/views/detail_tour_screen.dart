@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import 'package:tripaz_app/models/detail_tour_model.dart';
 import 'package:tripaz_app/repositories/main_repository.dart';
 import 'package:tripaz_app/services/main_api_service.dart';
+import 'package:tripaz_app/services/cache_service.dart';
 import 'package:tripaz_app/viewmodels/detail_tour_view_model.dart';
 import 'package:tripaz_app/views/detail_booking_screen.dart';
 import 'package:tripaz_app/views/full_screen_image.dart';
@@ -26,7 +27,7 @@ class _DetailTourScreenState extends State<DetailTourScreen> {
   void initState() {
     super.initState();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final mainRepository = MainRepository(MainApiService());
+      final mainRepository = MainRepository(MainApiService(), CacheService());
       Provider.of<DetailTourViewModel>(context, listen: false)
           .fetchTourDetails(widget.tourId);
     });

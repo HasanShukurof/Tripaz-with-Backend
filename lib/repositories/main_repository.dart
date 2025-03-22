@@ -1,23 +1,25 @@
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/tour_model.dart' as tour;
+import '../models/tour_model.dart';
 import '../models/user_login_model.dart';
 import '../services/main_api_service.dart';
+import '../services/cache_service.dart';
 import '../models/detail_tour_model.dart';
 import '../models/user_model.dart';
 import '../models/wishlist_tour_model.dart';
 import '../models/detail_booking_model.dart';
-import '../models/car_type_model.dart'; // CarTypeModel import edildi
+import '../models/car_type_model.dart';
 import '../models/payment_request_model.dart';
 import '../models/payment_response_model.dart';
-import '../models/booking_request_model.dart'; // Yeni model import edildi
-import '../models/booking_model.dart'; // BookingModel import edildi
+import '../models/booking_request_model.dart';
+import '../models/booking_model.dart' hide TourModel;
 
 class MainRepository {
   final MainApiService _mainApiService;
-  String? _lastOrderId; // OrderId'yi saklamak için
+  final CacheService _cacheService;
+  String? _lastOrderId;
 
-  MainRepository(this._mainApiService);
+  MainRepository(this._mainApiService, this._cacheService);
 
   String? get lastOrderId => _lastOrderId;
 
@@ -25,24 +27,60 @@ class MainRepository {
     return await _mainApiService.login(username, password);
   }
 
-  Future<List<tour.TourModel>> getTours() async {
+  Future<List<TourModel>> getTours() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('access_token');
 
     if (token == null || token.isEmpty) {
       throw Exception('Token not found. User may not be logged in.');
     }
-    return await _mainApiService.fetchTours(token);
+
+    List<TourModel>? cachedTours = await _cacheService.getDataList<TourModel>(
+      CacheService.KEY_TOURS,
+      (json) => TourModel.fromJson(json),
+    );
+
+    if (cachedTours != null) {
+      print('Turlar önbellekten alındı');
+      return cachedTours;
+    }
+
+    final tours = await _mainApiService.fetchTours(token);
+
+    if (tours.isNotEmpty) {
+      final toursJson = tours.map((tourItem) => tourItem.toJson()).toList();
+      await _cacheService.saveData(CacheService.KEY_TOURS, toursJson);
+      print('Turlar API\'den alındı ve önbelleğe kaydedildi');
+    }
+
+    return tours;
   }
 
-  Future<tour.TourModel> getTour(int tourId) async {
+  Future<TourModel> getTour(int tourId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('access_token');
 
     if (token == null || token.isEmpty) {
       throw Exception('Token not found. User may not be logged in.');
     }
-    return await _mainApiService.fetchTour(tourId, token);
+
+    TourModel? cachedTour = await _cacheService.getData<TourModel>(
+      CacheService.KEY_TOUR_DETAILS + tourId.toString(),
+      (json) => TourModel.fromJson(json),
+    );
+
+    if (cachedTour != null) {
+      print('Tur detayı önbellekten alındı: $tourId');
+      return cachedTour;
+    }
+
+    final tour = await _mainApiService.fetchTour(tourId, token);
+
+    await _cacheService.saveData(
+        CacheService.KEY_TOUR_DETAILS + tourId.toString(), tour.toJson());
+    print('Tur detayı API\'den alındı ve önbelleğe kaydedildi: $tourId');
+
+    return tour;
   }
 
   Future<DetailBookingModel> getDetailBooking(int tourId) async {
@@ -52,7 +90,26 @@ class MainRepository {
     if (token == null || token.isEmpty) {
       throw Exception('Token not found. User may not be logged in.');
     }
-    return await _mainApiService.fetchDetailBooking(tourId, token);
+
+    DetailBookingModel? cachedBooking =
+        await _cacheService.getData<DetailBookingModel>(
+      'cached_detail_booking_$tourId',
+      (json) => DetailBookingModel.fromJson(json),
+    );
+
+    if (cachedBooking != null) {
+      print('Detaylı rezervasyon bilgileri önbellekten alındı: $tourId');
+      return cachedBooking;
+    }
+
+    final booking = await _mainApiService.fetchDetailBooking(tourId, token);
+
+    await _cacheService.saveData(
+        'cached_detail_booking_$tourId', booking.toJson());
+    print(
+        'Detaylı rezervasyon bilgileri API\'den alındı ve önbelleğe kaydedildi: $tourId');
+
+    return booking;
   }
 
   Future<List<CarTypeModel>> getCarTypes(int tourId) async {
@@ -62,7 +119,27 @@ class MainRepository {
     if (token == null || token.isEmpty) {
       throw Exception('Token not found. User may not be logged in.');
     }
-    return await _mainApiService.fetchCarTypes(tourId, token);
+
+    List<CarTypeModel>? cachedCarTypes =
+        await _cacheService.getDataList<CarTypeModel>(
+      'cached_car_types_$tourId',
+      (json) => CarTypeModel.fromJson(json),
+    );
+
+    if (cachedCarTypes != null) {
+      print('Araç tipleri önbellekten alındı: $tourId');
+      return cachedCarTypes;
+    }
+
+    final carTypes = await _mainApiService.fetchCarTypes(tourId, token);
+
+    if (carTypes.isNotEmpty) {
+      final carTypesJson = carTypes.map((carType) => carType.toJson()).toList();
+      await _cacheService.saveData('cached_car_types_$tourId', carTypesJson);
+      print('Araç tipleri API\'den alındı ve önbelleğe kaydedildi: $tourId');
+    }
+
+    return carTypes;
   }
 
   Future<DetailTourModel> getTourDetails(int tourId) async {
@@ -72,7 +149,26 @@ class MainRepository {
     if (token == null || token.isEmpty) {
       throw Exception('Token not found. User may not be logged in.');
     }
-    return await _mainApiService.fetchTourDetails(tourId, token);
+
+    DetailTourModel? cachedTourDetails =
+        await _cacheService.getData<DetailTourModel>(
+      CacheService.KEY_TOUR_DETAILS + tourId.toString() + '_details',
+      (json) => DetailTourModel.fromJson(json),
+    );
+
+    if (cachedTourDetails != null) {
+      print('Tur detayları önbellekten alındı: $tourId');
+      return cachedTourDetails;
+    }
+
+    final tourDetails = await _mainApiService.fetchTourDetails(tourId, token);
+
+    await _cacheService.saveData(
+        CacheService.KEY_TOUR_DETAILS + tourId.toString() + '_details',
+        tourDetails.toJson());
+    print('Tur detayları API\'den alındı ve önbelleğe kaydedildi: $tourId');
+
+    return tourDetails;
   }
 
   Future<UserModel> getUser() async {
@@ -82,7 +178,23 @@ class MainRepository {
     if (token == null || token.isEmpty) {
       throw Exception('Token not found. User may not be logged in.');
     }
-    return await _mainApiService.fetchUser(token);
+
+    UserModel? cachedUser = await _cacheService.getData<UserModel>(
+      CacheService.KEY_USER_DATA,
+      (json) => UserModel.fromJson(json),
+    );
+
+    if (cachedUser != null) {
+      print('Kullanıcı bilgileri önbellekten alındı');
+      return cachedUser;
+    }
+
+    final user = await _mainApiService.fetchUser(token);
+
+    await _cacheService.saveData(CacheService.KEY_USER_DATA, user.toJson());
+    print('Kullanıcı bilgileri API\'den alındı ve önbelleğe kaydedildi');
+
+    return user;
   }
 
   Future<void> uploadProfileImage(File imageFile, String token) async {
@@ -92,7 +204,10 @@ class MainRepository {
     if (token == null || token.isEmpty) {
       throw Exception('Token not found. User may not be logged in.');
     }
-    return await _mainApiService.uploadProfileImage(imageFile, token);
+
+    await _mainApiService.uploadProfileImage(imageFile, token);
+
+    await _cacheService.clearCache(CacheService.KEY_USER_DATA);
   }
 
   Future<void> addTourToWishlist(int tourId) async {
@@ -102,7 +217,10 @@ class MainRepository {
     if (token == null || token.isEmpty) {
       throw Exception('Token not found. User may not be logged in.');
     }
-    return await _mainApiService.addTourToWishlist(tourId, token);
+
+    await _mainApiService.addTourToWishlist(tourId, token);
+
+    await _cacheService.clearCache(CacheService.KEY_WISHLIST);
   }
 
   Future<void> removeTourFromWishlist(int tourId) async {
@@ -112,7 +230,10 @@ class MainRepository {
     if (token == null || token.isEmpty) {
       throw Exception('Token not found. User may not be logged in.');
     }
-    return await _mainApiService.removeTourFromWishlist(tourId, token);
+
+    await _mainApiService.removeTourFromWishlist(tourId, token);
+
+    await _cacheService.clearCache(CacheService.KEY_WISHLIST);
   }
 
   Future<List<WishlistTourModel>> getWishlistTours() async {
@@ -122,7 +243,72 @@ class MainRepository {
     if (token == null || token.isEmpty) {
       throw Exception('Token not found. User may not be logged in.');
     }
-    return await _mainApiService.fetchWishlistTours(token);
+
+    print('Wishlist verisi için önbellek kontrolü yapılıyor...');
+
+    try {
+      // Önbellekte veri kontrolü
+      List<WishlistTourModel>? cachedWishlist =
+          await _cacheService.getDataList<WishlistTourModel>(
+        CacheService.KEY_WISHLIST,
+        (json) => WishlistTourModel.fromJson(json),
+      );
+
+      // Önbellekte veri varsa onu döndür
+      if (cachedWishlist != null && cachedWishlist.isNotEmpty) {
+        print('İstek listesi önbellekten alındı: ${cachedWishlist.length} öğe');
+        return cachedWishlist;
+      } else {
+        print('Önbellekte wishlist verisi bulunamadı veya boş');
+      }
+    } catch (e) {
+      print('Wishlist önbellek okuma hatası: $e');
+      // Hata durumunda önbelleği temizle
+      await _cacheService.clearCache(CacheService.KEY_WISHLIST);
+    }
+
+    // Önbellekte veri yoksa veya hata oluştuysa API'den al
+    print('Wishlist verisi API\'den alınıyor...');
+    try {
+      final wishlist = await _mainApiService.fetchWishlistTours(token);
+
+      // API'den gelen verileri önbelleğe kaydet
+      if (wishlist.isNotEmpty) {
+        try {
+          // Modelleri JSON'a çevirirken null kontrolü yapılmalı
+          final wishlistJson = wishlist
+              .map((item) {
+                try {
+                  return item.toJson();
+                } catch (e) {
+                  print('Wishlist item toJson hatası: $e');
+                  return null;
+                }
+              })
+              .where((item) => item != null)
+              .toList();
+
+          if (wishlistJson.isNotEmpty) {
+            await _cacheService.saveData(
+                CacheService.KEY_WISHLIST, wishlistJson);
+            print(
+                'İstek listesi API\'den alındı ve önbelleğe kaydedildi: ${wishlist.length} öğe');
+          } else {
+            print(
+                'Wishlist verisi JSON\'a dönüştürülemedi, önbelleğe kaydedilemedi');
+          }
+        } catch (e) {
+          print('Wishlist önbelleğe kaydetme hatası: $e');
+        }
+      } else {
+        print('API\'den gelen wishlist verisi boş');
+      }
+
+      return wishlist;
+    } catch (e) {
+      print('Wishlist API hatası: $e');
+      throw Exception('İstek listesi alınamadı: $e');
+    }
   }
 
   Future<void> register({
@@ -140,7 +326,6 @@ class MainRepository {
   Future<PaymentResponseModel> createPayment(PaymentRequestModel model) async {
     try {
       final response = await _mainApiService.createPayment(model);
-      // OrderId'yi sakla
       _lastOrderId = response.payload.orderId;
       print('Payment OrderId saved: $_lastOrderId');
       return response;
@@ -166,6 +351,9 @@ class MainRepository {
     try {
       final response = await _mainApiService.createBooking(model);
       print('Booking created successfully');
+
+      await _cacheService.clearCache(CacheService.KEY_BOOKINGS);
+
       return response;
     } catch (e) {
       print('Booking creation error in repository: $e');
@@ -180,18 +368,56 @@ class MainRepository {
     if (token == null || token.isEmpty) {
       throw Exception('Token not found. User may not be logged in.');
     }
-    return await _mainApiService.deleteUser(token);
+
+    await _mainApiService.deleteUser(token);
+
+    await _cacheService.clearAllCache();
   }
 
-  Future<List<tour.TourModel>> getPublicTours() async {
-    return await _mainApiService.fetchPublicTours();
+  Future<List<TourModel>> getPublicTours() async {
+    List<TourModel>? cachedTours = await _cacheService.getDataList<TourModel>(
+      'cached_public_tours',
+      (json) => TourModel.fromJson(json),
+    );
+
+    if (cachedTours != null) {
+      print('Genel turlar önbellekten alındı');
+      return cachedTours;
+    }
+
+    final tours = await _mainApiService.fetchPublicTours();
+
+    if (tours.isNotEmpty) {
+      final toursJson = tours.map((tour) => tour.toJson()).toList();
+      await _cacheService.saveData('cached_public_tours', toursJson);
+      print('Genel turlar API\'den alındı ve önbelleğe kaydedildi');
+    }
+
+    return tours;
   }
 
   Future<DetailTourModel> getPublicTourDetails(int tourId) async {
-    return await _mainApiService.fetchPublicTourDetails(tourId);
+    DetailTourModel? cachedTourDetails =
+        await _cacheService.getData<DetailTourModel>(
+      'cached_public_tour_details_$tourId',
+      (json) => DetailTourModel.fromJson(json),
+    );
+
+    if (cachedTourDetails != null) {
+      print('Genel tur detayları önbellekten alındı: $tourId');
+      return cachedTourDetails;
+    }
+
+    final tourDetails = await _mainApiService.fetchPublicTourDetails(tourId);
+
+    await _cacheService.saveData(
+        'cached_public_tour_details_$tourId', tourDetails.toJson());
+    print(
+        'Genel tur detayları API\'den alındı ve önbelleğe kaydedildi: $tourId');
+
+    return tourDetails;
   }
 
-  // Get user bookings
   Future<List<BookingModel>> getBookings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('access_token');
@@ -201,23 +427,35 @@ class MainRepository {
     }
 
     try {
+      List<BookingModel>? cachedBookings =
+          await _cacheService.getDataList<BookingModel>(
+        CacheService.KEY_BOOKINGS,
+        (json) => BookingModel.fromJson(json),
+      );
+
+      if (cachedBookings != null) {
+        print('Rezervasyonlar önbellekten alındı');
+        return cachedBookings;
+      }
+
       final bookings = await _mainApiService.fetchBookings(token);
 
-      if (bookings.isEmpty) {
-        print('No bookings found or empty list returned.');
+      if (bookings.isNotEmpty) {
+        final bookingsJson =
+            bookings.map((booking) => booking.toJson()).toList();
+        await _cacheService.saveData(CacheService.KEY_BOOKINGS, bookingsJson);
+        print('Rezervasyonlar API\'den alındı ve önbelleğe kaydedildi');
       } else {
-        print('Total ${bookings.length} bookings successfully fetched.');
+        print('No bookings found or empty list returned.');
       }
 
       return bookings;
     } catch (e) {
       print('Repository - Booking retrieval error: $e');
-      // Return empty list to prevent app crash
       return [];
     }
   }
 
-  // Get details of a specific booking
   Future<BookingModel> getBookingDetail(String orderId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('access_token');
@@ -226,7 +464,16 @@ class MainRepository {
       throw Exception('Token not found. User may not be logged in.');
     }
 
-    // Instead of fetching details individually, get all bookings and find the relevant one
+    BookingModel? cachedBooking = await _cacheService.getData<BookingModel>(
+      'cached_booking_detail_$orderId',
+      (json) => BookingModel.fromJson(json),
+    );
+
+    if (cachedBooking != null) {
+      print('Rezervasyon detayları önbellekten alındı: $orderId');
+      return cachedBooking;
+    }
+
     final bookings = await _mainApiService.fetchBookings(token);
 
     final booking = bookings.firstWhere(
@@ -234,6 +481,16 @@ class MainRepository {
       orElse: () => throw Exception('Booking not found: $orderId'),
     );
 
+    await _cacheService.saveData(
+        'cached_booking_detail_$orderId', booking.toJson());
+    print(
+        'Rezervasyon detayları API\'den alındı ve önbelleğe kaydedildi: $orderId');
+
     return booking;
+  }
+
+  Future<void> clearCache() async {
+    await _cacheService.clearAllCache();
+    print('Tüm önbellek temizlendi');
   }
 }

@@ -40,6 +40,20 @@ class TourModel {
           [],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'tourId': tourId,
+      'tourName': tourName,
+      'tourPrice': tourPrice,
+      'tourPopularStatus': tourPopularStatus,
+      'tourImages': tourImages.map((image) => image.toJson()).toList(),
+      'tourAbout': tourAbout,
+      'wishlists': wishlists.map((wishlist) => wishlist.toJson()).toList(),
+      'cars': cars.map((car) => car.toJson()).toList(),
+      'isFavorite': isFavorite,
+    };
+  }
 }
 
 class TourImage {
@@ -63,6 +77,15 @@ class TourImage {
       tourId: json['tourId'],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'tourImagesId': tourImagesId,
+      'tourImgageName': tourImageName,
+      'isMainImage': isMainImage,
+      'tourId': tourId,
+    };
+  }
 }
 
 class Wishlist {
@@ -82,6 +105,14 @@ class Wishlist {
       tourId: json['tourId'],
       userId: json['userId'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'wishlistId': wishlistId,
+      'tourId': tourId,
+      'userId': userId,
+    };
   }
 }
 
@@ -111,5 +142,16 @@ class Car {
       tourId: json['tourId'],
       carStatus: json['carStatus'],
     );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'carId': carId,
+      'carName': carName,
+      'carPrice': carPrice,
+      'carPersonCount': carPersonCount,
+      'tourId': tourId,
+      'carStatus': carStatus,
+    };
   }
 }

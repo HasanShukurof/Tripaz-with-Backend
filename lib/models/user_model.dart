@@ -10,4 +10,11 @@ class UserModel {
       userName: json['userName'],
     );
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'profileImageUrl': profileImageUrl,
+      'userName': userName,
+    };
+  }
 }
