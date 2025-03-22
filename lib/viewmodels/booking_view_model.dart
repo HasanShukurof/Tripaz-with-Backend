@@ -40,7 +40,7 @@ class BookingViewModel extends ChangeNotifier {
     }
   }
 
-  // Kullanıcının rezervasyonlarını getir
+  // Get user bookings
   Future<void> fetchBookings() async {
     try {
       _isLoading = true;
@@ -51,8 +51,13 @@ class BookingViewModel extends ChangeNotifier {
         _bookings = await _repository.getBookings();
         print('Bookings fetched: ${_bookings.length}');
 
+        // Repository artık boş liste dönebilir, bu durumu kontrol et
+        if (_bookings.isEmpty) {
+          print('No bookings found or data could not be retrieved.');
+        }
+
         // Eğer daha önce bir rezervasyon seçilmişse ve liste içinde varsa, onu güncelle
-        if (_selectedBooking != null) {
+        if (_selectedBooking != null && _bookings.isNotEmpty) {
           final updatedIndex = _bookings.indexWhere(
               (booking) => booking.orderId == _selectedBooking!.orderId);
 
@@ -62,8 +67,9 @@ class BookingViewModel extends ChangeNotifier {
           }
         }
       } catch (e) {
-        print('Rezervasyonları getirme hatası: $e');
-        throw Exception('Rezervasyonlar yüklenemedi: $e');
+        print('Error fetching bookings: $e');
+        _isLoading = false;
+        _error = 'Failed to load bookings: $e';
       }
     } catch (e) {
       _error = e.toString();
@@ -74,16 +80,16 @@ class BookingViewModel extends ChangeNotifier {
     }
   }
 
-  // Belirli bir rezervasyonun detaylarını getir
+  // Get details of a specific booking
   Future<void> fetchBookingDetail(String orderId) async {
     try {
       _isLoading = true;
       _error = null;
       notifyListeners();
 
-      // Önce mevcut listedeki rezervasyonu kontrol et
+      // First check existing booking in the list
       if (_bookings.isNotEmpty) {
-        // OrderId ile eşleşen rezervasyonu bul
+        // Find the booking matching the orderId
         final bookingIndex =
             _bookings.indexWhere((booking) => booking.orderId == orderId);
 
@@ -110,10 +116,10 @@ class BookingViewModel extends ChangeNotifier {
           print(
               'Booking detail found after refresh: ${_selectedBooking?.tourName}');
         } else {
-          throw Exception('Rezervasyon bulunamadı: $orderId');
+          throw Exception('Booking not found: $orderId');
         }
       } else {
-        throw Exception('Rezervasyon listesi boş, detay bulunamadı');
+        throw Exception('Booking list is empty, no details found');
       }
     } catch (e) {
       _error = e.toString();
@@ -124,7 +130,7 @@ class BookingViewModel extends ChangeNotifier {
     }
   }
 
-  // Seçilen rezervasyon detayını manuel olarak ayarla
+  // Manually set selected booking detail
   void setSelectedBooking(BookingModel booking) {
     _selectedBooking = booking;
     notifyListeners();

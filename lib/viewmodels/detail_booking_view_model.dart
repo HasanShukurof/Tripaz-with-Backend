@@ -44,7 +44,7 @@ class DetailBookingViewModel extends ChangeNotifier {
       print(
           "fetchDetailBooking: _detailBooking alındı. Değerler: ${_detailBooking?.toJson()}");
     } catch (e) {
-      _errorMessage = 'Rezervasyon detayları yüklenirken bir hata oluştu: $e';
+      _errorMessage = 'An error occurred while loading booking details: $e';
       print("fetchDetailBooking hata: $e");
     } finally {
       print("fetchDetailBooking finally çalıştı");
@@ -60,8 +60,10 @@ class DetailBookingViewModel extends ChangeNotifier {
 
     try {
       _carTypes = await _mainRepository.getCarTypes(tourId);
+      print("Car types: $_carTypes");
     } catch (e) {
-      _errorMessage = 'Araç tipleri yüklenirken bir hata oluştu: $e';
+      _errorMessage = 'An error occurred while loading car types: $e';
+      print("fetchCarTypes hata: $e");
     } finally {
       _isLoading = false;
       notifyListeners();

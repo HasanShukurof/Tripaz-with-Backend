@@ -46,42 +46,94 @@ class BookingModel {
   });
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
-    TourModel? tourModel;
-    String tourName = "";
-    String tourImageName = "";
+    try {
+      TourModel? tourModel;
+      String tourName = "";
+      String tourImageName = "";
 
-    if (json["tour"] != null && json["tour"] is Map<String, dynamic>) {
-      tourModel = TourModel.fromJson(json["tour"]);
-      tourName = tourModel.tourName;
+      if (json["tour"] != null && json["tour"] is Map<String, dynamic>) {
+        try {
+          tourModel = TourModel.fromJson(json["tour"]);
+          tourName = tourModel.tourName;
 
-      if (tourModel.tourImages != null && tourModel.tourImages.isNotEmpty) {
-        tourImageName = tourModel.tourImages.first.tourImgageName;
+          if (tourModel.tourImages.isNotEmpty) {
+            tourImageName = tourModel.tourImages.first.tourImgageName;
+          }
+        } catch (e) {
+          print('Tour model ayrıştırma hatası: $e');
+        }
       }
-    }
 
-    return BookingModel(
-      orderId: json["orderId"] ?? "",
-      guestName: json["guestName"] ?? "",
-      phoneNumber: json["phoneNumber"] ?? "",
-      autoType: json["autoType"] ?? 0,
-      airportPickupEnabled: json["airportPickupEnabled"] ?? 0,
-      pickupDate: json["pickupDate"] ?? "",
-      pickupTime: json["pickupTime"] ?? "",
-      comment: json["comment"] ?? "",
-      tourStartDate: json["tourStartDate"] ?? "",
-      tourEndDate: json["tourEndDate"] ?? "",
-      nightCount: json["nightCount"] ?? 0,
-      totalPrice: (json["totalPrice"] ?? 0).toDouble(),
-      cashOrCahless: json["cashOrCahless"] ?? 0,
-      payAmount: (json["payAmount"] ?? 0).toDouble(),
-      orderDate: json["orderDate"] ?? "",
-      tour: tourModel,
-      tourName: tourName,
-      tourImageName: tourImageName,
-      status: json["status"] ?? "Pending",
-      tourId: json["tourId"] ?? 0,
-      guestCount: json["guestCount"] ?? 0,
-    );
+      double safeParseDouble(dynamic value) {
+        if (value == null) return 0.0;
+        if (value is double) return value;
+        if (value is int) return value.toDouble();
+        try {
+          return double.parse(value.toString());
+        } catch (e) {
+          return 0.0;
+        }
+      }
+
+      int safeParseInt(dynamic value) {
+        if (value == null) return 0;
+        if (value is int) return value;
+        try {
+          return int.parse(value.toString());
+        } catch (e) {
+          return 0;
+        }
+      }
+
+      return BookingModel(
+        orderId: json["orderId"]?.toString() ?? "",
+        guestName: json["guestName"]?.toString() ?? "",
+        phoneNumber: json["phoneNumber"]?.toString() ?? "",
+        autoType: safeParseInt(json["autoType"]),
+        airportPickupEnabled: safeParseInt(json["airportPickupEnabled"]),
+        pickupDate: json["pickupDate"]?.toString() ?? "",
+        pickupTime: json["pickupTime"]?.toString() ?? "",
+        comment: json["comment"]?.toString() ?? "",
+        tourStartDate: json["tourStartDate"]?.toString() ?? "",
+        tourEndDate: json["tourEndDate"]?.toString() ?? "",
+        nightCount: safeParseInt(json["nightCount"]),
+        totalPrice: safeParseDouble(json["totalPrice"]),
+        cashOrCahless: safeParseInt(json["cashOrCahless"]),
+        payAmount: safeParseDouble(json["payAmount"]),
+        orderDate: json["orderDate"]?.toString() ?? "",
+        tour: tourModel,
+        tourName: json["tourName"]?.toString() ?? tourName,
+        tourImageName: tourImageName,
+        status: json["status"]?.toString() ?? "Pending",
+        tourId: safeParseInt(json["tourId"]),
+        guestCount: safeParseInt(json["guestCount"]),
+      );
+    } catch (e) {
+      print('BookingModel.fromJson ayrıştırma hatası: $e');
+      return BookingModel(
+        orderId: json["orderId"]?.toString() ?? "hata-id",
+        guestName: "Ayrıştırma hatası",
+        phoneNumber: "",
+        autoType: 0,
+        airportPickupEnabled: 0,
+        pickupDate: "",
+        pickupTime: "",
+        comment: "",
+        tourStartDate: "",
+        tourEndDate: "",
+        nightCount: 0,
+        totalPrice: 0.0,
+        cashOrCahless: 0,
+        payAmount: 0.0,
+        orderDate: "",
+        tour: null,
+        tourName: "Veri ayrıştırma hatası",
+        tourImageName: "",
+        status: "Error",
+        tourId: 0,
+        guestCount: 0,
+      );
+    }
   }
 
   Map<String, dynamic> toJson() => {
@@ -133,24 +185,65 @@ class TourModel {
   });
 
   factory TourModel.fromJson(Map<String, dynamic> json) {
-    List<TourImage> images = [];
-    if (json["tourImages"] != null && json["tourImages"] is List) {
-      images = (json["tourImages"] as List)
-          .map((image) => TourImage.fromJson(image))
-          .toList();
-    }
+    try {
+      List<TourImage> images = [];
+      if (json["tourImages"] != null && json["tourImages"] is List) {
+        try {
+          images = (json["tourImages"] as List)
+              .map((image) => TourImage.fromJson(image))
+              .toList();
+        } catch (e) {
+          print('TourImages ayrıştırma hatası: $e');
+          // Hata durumunda boş liste kullan
+        }
+      }
 
-    return TourModel(
-      tourId: json["tourId"] ?? 0,
-      tourName: json["tourName"] ?? "",
-      tourPrice: (json["tourPrice"] ?? 0).toDouble(),
-      tourNightPrice: (json["tourNightPrice"] ?? 0).toDouble(),
-      tourAirportPrice: (json["tourAirportPrice"] ?? 0).toDouble(),
-      tourStartDate: json["tourStartDate"],
-      tourPopularStatus: json["tourPopularStatus"] ?? 0,
-      tourAbout: json["tourAbout"],
-      tourImages: images,
-    );
+      // Sayısal alanlarda güvenli dönüşüm
+      double safeParseDouble(dynamic value) {
+        if (value == null) return 0.0;
+        if (value is double) return value;
+        if (value is int) return value.toDouble();
+        try {
+          return double.parse(value.toString());
+        } catch (e) {
+          return 0.0;
+        }
+      }
+
+      int safeParseInt(dynamic value) {
+        if (value == null) return 0;
+        if (value is int) return value;
+        try {
+          return int.parse(value.toString());
+        } catch (e) {
+          return 0;
+        }
+      }
+
+      return TourModel(
+        tourId: safeParseInt(json["tourId"]),
+        tourName: json["tourName"]?.toString() ?? "",
+        tourPrice: safeParseDouble(json["tourPrice"]),
+        tourNightPrice: safeParseDouble(json["tourNightPrice"]),
+        tourAirportPrice: safeParseDouble(json["tourAirportPrice"]),
+        tourStartDate: json["tourStartDate"]?.toString(),
+        tourPopularStatus: safeParseInt(json["tourPopularStatus"]),
+        tourAbout: json["tourAbout"]?.toString(),
+        tourImages: images,
+      );
+    } catch (e) {
+      print('TourModel.fromJson ayrıştırma hatası: $e');
+      // Kritik hata durumunda minimal bir model döndür
+      return TourModel(
+        tourId: 0,
+        tourName: "Ayrıştırma hatası",
+        tourPrice: 0.0,
+        tourNightPrice: 0.0,
+        tourAirportPrice: 0.0,
+        tourPopularStatus: 0,
+        tourImages: [],
+      );
+    }
   }
 
   Map<String, dynamic> toJson() => {
@@ -176,10 +269,28 @@ class TourImage {
   });
 
   factory TourImage.fromJson(Map<String, dynamic> json) {
-    return TourImage(
-      tourImagesId: json["tourImagesId"] ?? 0,
-      tourImgageName: json["tourImgageName"] ?? "",
-    );
+    try {
+      int safeParseInt(dynamic value) {
+        if (value == null) return 0;
+        if (value is int) return value;
+        try {
+          return int.parse(value.toString());
+        } catch (e) {
+          return 0;
+        }
+      }
+
+      return TourImage(
+        tourImagesId: safeParseInt(json["tourImagesId"]),
+        tourImgageName: json["tourImgageName"]?.toString() ?? "",
+      );
+    } catch (e) {
+      print('TourImage.fromJson ayrıştırma hatası: $e');
+      return TourImage(
+        tourImagesId: 0,
+        tourImgageName: "",
+      );
+    }
   }
 
   Map<String, dynamic> toJson() => {

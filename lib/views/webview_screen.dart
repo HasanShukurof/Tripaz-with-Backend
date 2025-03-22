@@ -111,7 +111,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
               return;
             }
 
-            _handlePaymentError('Ödeme işlemi sırasında bir hata oluştu.');
+            _handlePaymentError('An error occurred during payment process.');
           },
           onNavigationRequest: (NavigationRequest request) {
             print("Navigation request to: ${request.url}");
@@ -161,7 +161,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
       _controller.loadRequest(Uri.parse(widget.paymentUrl));
     } catch (e) {
       print("URL loading error: $e");
-      _handlePaymentError('Ödeme sayfası yüklenirken bir hata oluştu');
+      _handlePaymentError('An error occurred while loading payment page');
     }
   }
 
@@ -280,7 +280,7 @@ class _WebViewScreenState extends State<WebViewScreen> {
               MaterialPageRoute(
                 builder: (context) => const PaymentErrorScreen(
                   errorMessage:
-                      'Ödeme durumu kontrol edilirken bir hata oluştu.',
+                      'An error occurred while checking payment status.',
                   isTimeout: false,
                 ),
               ),
@@ -314,6 +314,15 @@ class _WebViewScreenState extends State<WebViewScreen> {
         }
 
         break;
+      }
+    }
+
+    if (url.contains('payment-error') || url.contains('payment-failed')) {
+      print('Payment error page detected: $url');
+      if (!_hasNavigatedAway) {
+        _hasNavigatedAway = true;
+        _cleanupWebView();
+        _handlePaymentError('An error occurred during payment process.');
       }
     }
 

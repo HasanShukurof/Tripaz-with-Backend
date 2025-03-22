@@ -30,7 +30,7 @@ class MainRepository {
     String? token = prefs.getString('access_token');
 
     if (token == null || token.isEmpty) {
-      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+      throw Exception('Token not found. User may not be logged in.');
     }
     return await _mainApiService.fetchTours(token);
   }
@@ -40,7 +40,7 @@ class MainRepository {
     String? token = prefs.getString('access_token');
 
     if (token == null || token.isEmpty) {
-      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+      throw Exception('Token not found. User may not be logged in.');
     }
     return await _mainApiService.fetchTour(tourId, token);
   }
@@ -50,7 +50,7 @@ class MainRepository {
     String? token = prefs.getString('access_token');
 
     if (token == null || token.isEmpty) {
-      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+      throw Exception('Token not found. User may not be logged in.');
     }
     return await _mainApiService.fetchDetailBooking(tourId, token);
   }
@@ -60,7 +60,7 @@ class MainRepository {
     String? token = prefs.getString('access_token');
 
     if (token == null || token.isEmpty) {
-      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+      throw Exception('Token not found. User may not be logged in.');
     }
     return await _mainApiService.fetchCarTypes(tourId, token);
   }
@@ -70,7 +70,7 @@ class MainRepository {
     String? token = prefs.getString('access_token');
 
     if (token == null || token.isEmpty) {
-      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+      throw Exception('Token not found. User may not be logged in.');
     }
     return await _mainApiService.fetchTourDetails(tourId, token);
   }
@@ -80,7 +80,7 @@ class MainRepository {
     String? token = prefs.getString('access_token');
 
     if (token == null || token.isEmpty) {
-      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+      throw Exception('Token not found. User may not be logged in.');
     }
     return await _mainApiService.fetchUser(token);
   }
@@ -90,7 +90,7 @@ class MainRepository {
     String? token = prefs.getString('access_token');
 
     if (token == null || token.isEmpty) {
-      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+      throw Exception('Token not found. User may not be logged in.');
     }
     return await _mainApiService.uploadProfileImage(imageFile, token);
   }
@@ -100,7 +100,7 @@ class MainRepository {
     String? token = prefs.getString('access_token');
 
     if (token == null || token.isEmpty) {
-      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+      throw Exception('Token not found. User may not be logged in.');
     }
     return await _mainApiService.addTourToWishlist(tourId, token);
   }
@@ -110,7 +110,7 @@ class MainRepository {
     String? token = prefs.getString('access_token');
 
     if (token == null || token.isEmpty) {
-      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+      throw Exception('Token not found. User may not be logged in.');
     }
     return await _mainApiService.removeTourFromWishlist(tourId, token);
   }
@@ -120,7 +120,7 @@ class MainRepository {
     String? token = prefs.getString('access_token');
 
     if (token == null || token.isEmpty) {
-      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+      throw Exception('Token not found. User may not be logged in.');
     }
     return await _mainApiService.fetchWishlistTours(token);
   }
@@ -178,7 +178,7 @@ class MainRepository {
     String? token = prefs.getString('access_token');
 
     if (token == null || token.isEmpty) {
-      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+      throw Exception('Token not found. User may not be logged in.');
     }
     return await _mainApiService.deleteUser(token);
   }
@@ -191,32 +191,47 @@ class MainRepository {
     return await _mainApiService.fetchPublicTourDetails(tourId);
   }
 
-  // Kullanıcının rezervasyonlarını getir
+  // Get user bookings
   Future<List<BookingModel>> getBookings() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('access_token');
 
     if (token == null || token.isEmpty) {
-      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+      throw Exception('Token not found. User may not be logged in.');
     }
-    return await _mainApiService.fetchBookings(token);
+
+    try {
+      final bookings = await _mainApiService.fetchBookings(token);
+
+      if (bookings.isEmpty) {
+        print('No bookings found or empty list returned.');
+      } else {
+        print('Total ${bookings.length} bookings successfully fetched.');
+      }
+
+      return bookings;
+    } catch (e) {
+      print('Repository - Booking retrieval error: $e');
+      // Return empty list to prevent app crash
+      return [];
+    }
   }
 
-  // Belirli bir rezervasyonun detaylarını getir
+  // Get details of a specific booking
   Future<BookingModel> getBookingDetail(String orderId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('access_token');
 
     if (token == null || token.isEmpty) {
-      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+      throw Exception('Token not found. User may not be logged in.');
     }
 
-    // Tek tek detay çekmek yerine tüm rezervasyon listesini çekip içinden ilgili rezervasyonu buluyoruz
+    // Instead of fetching details individually, get all bookings and find the relevant one
     final bookings = await _mainApiService.fetchBookings(token);
 
     final booking = bookings.firstWhere(
       (booking) => booking.orderId == orderId,
-      orElse: () => throw Exception('Rezervasyon bulunamadı: $orderId'),
+      orElse: () => throw Exception('Booking not found: $orderId'),
     );
 
     return booking;

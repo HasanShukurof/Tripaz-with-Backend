@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/booking_view_model.dart';
 import 'booking_detail_screen.dart';
+import 'dart:convert';
 
 class BookingScreen extends StatefulWidget {
   const BookingScreen({super.key});
@@ -15,7 +16,7 @@ class _BookingScreenState extends State<BookingScreen> {
   @override
   void initState() {
     super.initState();
-    // Sayfa yüklendiğinde rezervasyonları çek
+    // Fetch bookings when page loads
     WidgetsBinding.instance.addPostFrameCallback((_) {
       Provider.of<BookingViewModel>(context, listen: false).fetchBookings();
     });
@@ -46,7 +47,7 @@ class _BookingScreenState extends State<BookingScreen> {
               Provider.of<BookingViewModel>(context, listen: false)
                   .fetchBookings();
               ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Rezervasyonlar yenileniyor...')),
+                const SnackBar(content: Text('Refreshing bookings...')),
               );
             },
           ),
@@ -69,7 +70,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      'Bir hata oluştu: ${viewModel.error}',
+                      'An error occurred: ${viewModel.error}',
                       textAlign: TextAlign.center,
                       style: TextStyle(color: Colors.red),
                     ),
@@ -78,7 +79,7 @@ class _BookingScreenState extends State<BookingScreen> {
                       onPressed: () {
                         viewModel.fetchBookings();
                       },
-                      child: const Text('Tekrar Dene'),
+                      child: const Text('Try Again'),
                     ),
                   ],
                 ),
@@ -88,7 +89,7 @@ class _BookingScreenState extends State<BookingScreen> {
             if (viewModel.bookings.isEmpty) {
               return const Center(
                 child: Text(
-                  'Henüz rezervasyonunuz bulunmamaktadır.',
+                  'You don\'t have any bookings yet.',
                   style: TextStyle(fontSize: 16),
                 ),
               );
@@ -100,7 +101,7 @@ class _BookingScreenState extends State<BookingScreen> {
               itemBuilder: (context, index) {
                 final booking = viewModel.bookings[index];
 
-                // Tarih formatını günlük kullanıma uygun hale getir
+                // Format date for daily use
                 String formattedDate = '';
                 try {
                   final parsedDate = DateTime.parse(booking.tourStartDate);
@@ -111,14 +112,14 @@ class _BookingScreenState extends State<BookingScreen> {
 
                 return GestureDetector(
                   onTap: () {
-                    // Rezervasyon detayını manuel olarak ayarla ve detay sayfasına git
+                    // Manually set booking detail and go to detail page
                     try {
-                      // Önce mevcut verilerden rezervasyonu seç
+                      // First select booking from existing data
                       viewModel.setSelectedBooking(booking);
                       print(
                           'Booking selected for detail view: ${booking.orderId}');
 
-                      // Sonra detay sayfasına yönlendir
+                      // Then go to detail page
                       Navigator.push(
                         context,
                         MaterialPageRoute(
@@ -132,7 +133,7 @@ class _BookingScreenState extends State<BookingScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
                             content: Text(
-                                'Rezervasyon detayları yüklenirken bir hata oluştu')),
+                                'An error occurred while loading booking details')),
                       );
                     }
                   },
@@ -158,11 +159,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                 topRight: Radius.circular(12),
                               ),
                               image: DecorationImage(
-                                image: booking.tourImageName.isNotEmpty &&
-                                        booking.tourImageName.startsWith('http')
-                                    ? NetworkImage(booking.tourImageName)
-                                    : const NetworkImage(
-                                        'https://gabalatours.com/wp-content/uploads/2022/07/things-to-do-in-gabala-1.jpg'),
+                                image: _getBookingImage(booking),
                                 fit: BoxFit.cover,
                               ),
                             ),
@@ -193,7 +190,9 @@ class _BookingScreenState extends State<BookingScreen> {
                                         borderRadius: BorderRadius.circular(20),
                                       ),
                                       child: Text(
-                                        booking.status,
+                                        booking.status == "Pending"
+                                            ? "APPROVED"
+                                            : booking.status,
                                         style: const TextStyle(
                                           color: Colors.blue,
                                           fontWeight: FontWeight.bold,
@@ -222,7 +221,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                         size: 16, color: Colors.grey.shade600),
                                     const SizedBox(width: 8),
                                     Text(
-                                      'Guests: ${booking.guestCount} Adults',
+                                      'Guests: ${getCarCapacity(booking.autoType)}',
                                       style: TextStyle(
                                           color: Colors.grey.shade600),
                                     ),
@@ -241,7 +240,7 @@ class _BookingScreenState extends State<BookingScreen> {
                                       ),
                                     ),
                                     Text(
-                                      '${booking.totalPrice.toStringAsFixed(0)} AZN',
+                                      '${booking.totalPrice.toStringAsFixed(2)} AZN',
                                       style: const TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
@@ -264,5 +263,73 @@ class _BookingScreenState extends State<BookingScreen> {
         ),
       ),
     );
+  }
+
+  String getCarCapacity(int autoType) {
+    switch (autoType) {
+      case 0:
+        return '1-3 Pax';
+      case 1:
+        return '1-4 Pax';
+      case 2:
+        return '1-6 Pax';
+      case 3:
+        return '1-12 Pax';
+      default:
+        return 'Unknown';
+    }
+  }
+
+  ImageProvider _getBookingImage(dynamic booking) {
+    // İlk olarak tour nesnesindeki resimleri kontrol et
+    if (booking.tour != null &&
+        booking.tour.tourImages != null &&
+        booking.tour.tourImages.isNotEmpty &&
+        booking.tour.tourImages.first.tourImgageName.isNotEmpty) {
+      String imageUrl = booking.tour.tourImages.first.tourImgageName;
+
+      if (imageUrl.startsWith('http')) {
+        return NetworkImage(imageUrl);
+      } else if (imageUrl.isNotEmpty &&
+          (imageUrl.startsWith('/9j/') || imageUrl.startsWith('data:image'))) {
+        // Base64 formatındaki resmi işle
+        try {
+          String base64String = imageUrl;
+          // Eğer data:image ile başlıyorsa, sadece base64 kısmını çıkar
+          if (base64String.contains(',')) {
+            base64String = base64String.split(',')[1];
+          }
+
+          return MemoryImage(base64Decode(base64String));
+        } catch (e) {
+          print('Base64 decode error: $e');
+        }
+      }
+    }
+
+    // Sonra doğrudan booking nesnesindeki tourImageName'i kontrol et
+    if (booking.tourImageName.isNotEmpty) {
+      if (booking.tourImageName.startsWith('http')) {
+        return NetworkImage(booking.tourImageName);
+      } else if (booking.tourImageName.startsWith('/9j/') ||
+          booking.tourImageName.startsWith('data:image')) {
+        // Base64 formatındaki resmi işle
+        try {
+          String base64String = booking.tourImageName;
+          // Eğer data:image ile başlıyorsa, sadece base64 kısmını çıkar
+          if (base64String.contains(',')) {
+            base64String = base64String.split(',')[1];
+          }
+
+          return MemoryImage(base64Decode(base64String));
+        } catch (e) {
+          print('Base64 decode error: $e');
+        }
+      }
+    }
+
+    // Varsayılan resim - sadece hiçbir resim bulunamadığında placeholder göster
+    return NetworkImage(
+        'https://tripazapp.s3.amazonaws.com/placeholder-image.jpg');
   }
 }

@@ -1,6 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
+import 'dart:convert'; // jsonDecode için ekledik
 import '../models/tour_model.dart' as tour;
 import '../models/user_login_model.dart';
 import '../models/detail_tour_model.dart';
@@ -468,52 +469,183 @@ class MainApiService {
     }
   }
 
-  // Kullanıcının rezervasyonlarını getir
+  // Get user bookings
   Future<List<BookingModel>> fetchBookings(String token) async {
     try {
-      final response = await _dio.get(
-        'https://tripaz.az/api/Tour/orders',
-        options: Options(headers: {
+      // Dio'nun zaman aşımı süresini ve alma tamponunu arttır
+      final options = Options(
+        headers: {
           'accept': 'text/plain',
           'Authorization': 'Bearer $token',
           'Content-Type': 'application/json',
-        }),
+        },
+        receiveTimeout: const Duration(minutes: 2),
+        sendTimeout: const Duration(minutes: 1),
       );
 
-      print('Bookings API Response: ${response.data}');
+      print('Fetching booking data...');
 
-      if (response.statusCode == 200) {
-        if (response.data is List) {
-          List<dynamic> data = response.data;
-          return data.map((booking) => BookingModel.fromJson(booking)).toList();
+      // API'ye sayfalama parametreleri ekleyerek veri miktarını sınırla
+      // Not: API'nin bu parametreleri desteklemesi gerekir, eğer desteklemiyorsa
+      // backend tarafında değişiklik yapılması gerekecektir
+      Map<String, dynamic> queryParams = {
+        'pageSize': 10, // Sayfa başına 10 kayıt
+        'pageNumber': 1, // İlk sayfa
+        'sortBy': 'orderDate', // Tarihe göre sırala
+        'sortDir': 'desc' // Yeniden eskiye
+      };
+
+      try {
+        final response = await _dio.get(
+          'https://tripaz.az/api/Tour/orders',
+          options: options,
+          queryParameters: queryParams,
+        );
+
+        // Yanıt boyutu kontrolü
+        final responseSize = response.data.toString().length;
+        print('Booking API Response Size: $responseSize bytes');
+
+        if (response.statusCode == 200) {
+          if (response.data is List) {
+            List<dynamic> data = response.data;
+
+            // Veri yapısını ve uzunluğunu kontrol et
+            print('Number of bookings: ${data.length}');
+
+            // Eğer liste çok büyükse (150+ kayıt), manuel olarak sınırla
+            if (data.length > 150) {
+              print('Too many bookings, getting only last 20...');
+              data = data.sublist(0, 20); // Only get last 20 bookings
+            }
+
+            // Process each booking item individually and apply error handling
+            List<BookingModel> bookings = [];
+            for (var bookingData in data) {
+              try {
+                final booking = BookingModel.fromJson(bookingData);
+                bookings.add(booking);
+              } catch (parseError) {
+                print('Booking parsing error: $parseError');
+                print('Invalid data: $bookingData');
+              }
+            }
+
+            if (bookings.isEmpty) {
+              print('No bookings found or empty list returned.');
+            } else {
+              print('Total ${bookings.length} bookings fetched successfully.');
+            }
+
+            return bookings;
+          } else {
+            throw Exception('Beklenmedik yanıt formatı: Liste bekleniyor');
+          }
         } else {
-          throw Exception('Beklenmedik yanıt formatı: Liste bekleniyor');
+          throw Exception('Failed to load bookings: ${response.statusCode}');
         }
-      } else {
-        throw Exception('Rezervasyonlar yüklenemedi: ${response.statusCode}');
+      } catch (e) {
+        // API sayfalama desteği yoksa veya hata durumunda alternatif yöntem dene
+        print(
+            'Sayfalama desteği yok veya hata oluştu, alternatif yöntem deneniyor...');
+
+        // API'yi yine çağırmayı dene ama bu sefer tüm veriyi çekmek yerine
+        // maksimum boyut limitli olarak çalış
+        try {
+          print('Son çare: Sınırlı veri transferi ile deneme...');
+
+          // Veri boyutunu sınırla
+          _dio.options.receiveDataWhenStatusError = true;
+          _dio.options.responseType =
+              ResponseType.bytes; // Yanıtı byte olarak al
+
+          final bytesResponse = await _dio.get(
+            'https://tripaz.az/api/Tour/orders',
+            options: options,
+          );
+
+          if (bytesResponse.statusCode == 200) {
+            // Yanıtı byte olarak aldık, şimdi JSON'a çevirelim
+            // Ancak veri çok büyükse önce keselim
+            final bytes = bytesResponse.data as List<int>;
+            print('Alınan veri boyutu: ${bytes.length} bytes');
+
+            // 1MB üzerindeyse kırp (1048576 bytes = 1MB)
+            List<int> truncatedBytes = bytes;
+            if (bytes.length > 1048576) {
+              print('Çok büyük veri, 1MB\'a kırpılıyor...');
+              truncatedBytes = bytes.sublist(0, 1048576);
+            }
+
+            try {
+              final jsonString = String.fromCharCodes(truncatedBytes);
+              // JSON olarak ayrıştır - listeden emin değilsek ilk önce kontrol et
+              final jsonData = jsonDecode(jsonString);
+
+              if (jsonData is List) {
+                List<dynamic> dataList = jsonData;
+                print('Manual trimming with booking count: ${dataList.length}');
+
+                // En fazla 20 kayıt al
+                if (dataList.length > 20) {
+                  dataList = dataList.sublist(0, 20);
+                }
+
+                List<BookingModel> bookings = [];
+                for (var bookingData in dataList) {
+                  try {
+                    final booking = BookingModel.fromJson(bookingData);
+                    bookings.add(booking);
+                  } catch (parseError) {
+                    print(
+                        'Manuel kırpmalı veri ayrıştırma hatası: $parseError');
+                  }
+                }
+
+                if (bookings.isEmpty) {
+                  print('No bookings found or empty list returned.');
+                } else {
+                  print(
+                      'Total ${bookings.length} bookings fetched successfully.');
+                }
+
+                return bookings;
+              }
+            } catch (jsonError) {
+              print('Kırpılmış veri JSON hatası: $jsonError');
+            }
+          }
+        } catch (bytesError) {
+          print('Byte sınırlı sorgu hatası: $bytesError');
+        }
+
+        // Son çare: Boş liste dön
+        print('Tüm yöntemler başarısız oldu, boş liste dönülüyor.');
+        return [];
       }
     } catch (e) {
-      print('Rezervasyonları getirme hatası: $e');
-      rethrow;
+      print('Error fetching bookings: $e');
+      // Boş liste dön, uygulama çökmesini önle
+      return [];
     }
   }
 
-  // Belirli bir rezervasyonun detaylarını getir - aynı API'yi kullanır
-  Future<BookingModel> fetchBookingDetail(String orderId, String token) async {
+  // Get details of a specific booking - uses the same API
+  Future<BookingModel> fetchBookingDetail(String token, String orderId) async {
     try {
-      // Tüm rezervasyonları getir ve içinden ID ile eşleşeni bul
+      // Get all bookings and find the one matching the ID
       final allBookings = await fetchBookings(token);
 
       // OrderId ile eşleşen rezervasyonu bul
-      final bookingDetail = allBookings.firstWhere(
+      final booking = allBookings.firstWhere(
         (booking) => booking.orderId == orderId,
-        orElse: () => throw Exception('Rezervasyon bulunamadı: $orderId'),
+        orElse: () => throw Exception('Booking not found: $orderId'),
       );
 
-      print('Booking detail found from list: ${bookingDetail.tourName}');
-      return bookingDetail;
+      print('Booking detail found from list: ${booking.tourName}');
+      return booking;
     } catch (e) {
-      print('Rezervasyon detayı getirme hatası: $e');
+      print('Error fetching booking detail: $e');
       rethrow;
     }
   }

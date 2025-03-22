@@ -22,20 +22,23 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
   @override
   void initState() {
     super.initState();
-    // Sayfa yüklendiğinde rezervasyon detayını çek
+    // Fetch booking detail when page loads
+    _loadBookingDetail();
+  }
+
+  void _loadBookingDetail() {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final bookingViewModel =
           Provider.of<BookingViewModel>(context, listen: false);
 
-      // Eğer zaten seçili bir rezervasyon varsa, API'ye istek yapmadan onu kullan
-      // Bu, rezervasyon listesinden tıklandığında gereksiz API çağrısını önler
+      // If already has a selected booking, return without making API call again
       if (bookingViewModel.selectedBooking != null &&
           bookingViewModel.selectedBooking!.orderId == widget.orderId) {
-        print('Seçili rezervasyon zaten mevcut, API çağrısı yapılmayacak');
+        print('Selected booking already exists, no API call will be made');
         return;
       }
 
-      // Değilse detayları getir
+      // Otherwise, fetch booking details
       bookingViewModel.fetchBookingDetail(widget.orderId);
     });
   }
@@ -71,7 +74,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    'Bir hata oluştu: ${viewModel.error}',
+                    'An error occurred: ${viewModel.error}',
                     textAlign: TextAlign.center,
                     style: TextStyle(color: Colors.red),
                   ),
@@ -86,7 +89,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                         viewModel.fetchBookingDetail(widget.orderId);
                       }
                     },
-                    child: const Text('Tekrar Dene'),
+                    child: const Text('Try Again'),
                   ),
                   const SizedBox(height: 16),
                   ElevatedButton(
@@ -95,7 +98,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     },
                     style: ElevatedButton.styleFrom(
                         backgroundColor: Colors.red.shade50),
-                    child: const Text('Geri Dön'),
+                    child: const Text('Go Back'),
                   ),
                 ],
               ),
@@ -109,7 +112,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   const Text(
-                    'Rezervasyon detayları bulunamadı.',
+                    'Booking details not found.',
                     style: TextStyle(fontSize: 16),
                   ),
                   const SizedBox(height: 16),
@@ -117,7 +120,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                     onPressed: () {
                       Navigator.pop(context);
                     },
-                    child: const Text('Geri Dön'),
+                    child: const Text('Go Back'),
                   ),
                 ],
               ),
@@ -155,69 +158,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
           }
 
           // Base64 resim verisini kontrol et
-          Widget tourImage;
-
-          // Önce tour nesenesi kontrolü
-          String imageData = '';
-          if (booking.tour != null && booking.tour!.tourImages.isNotEmpty) {
-            // Tour nesnesinden resim verisi
-            imageData = booking.tour!.tourImages.first.tourImgageName;
-            print('Tour nesnesinden resim bulundu');
-          } else if (booking.tourImageName.isNotEmpty) {
-            // Doğrudan booking model üzerindeki veri
-            imageData = booking.tourImageName;
-            print('Booking modelinden resim bulundu');
-          }
-
-          if (imageData.startsWith('http')) {
-            // HTTP URL ise NetworkImage kullan
-            tourImage = Image.network(
-              imageData,
-              fit: BoxFit.cover,
-              errorBuilder: (context, error, stackTrace) {
-                print('Image load error: $error');
-                return Container(
-                  color: Colors.grey.shade200,
-                  child: const Center(child: Icon(Icons.error)),
-                );
-              },
-            );
-          } else if (imageData.isNotEmpty &&
-              (imageData.startsWith('/9j/') ||
-                  imageData.startsWith('data:image'))) {
-            // Base64 encoded image
-            try {
-              String base64String = imageData;
-              // Eğer data:image ile başlıyorsa, sadece base64 kısmını al
-              if (base64String.contains(',')) {
-                base64String = base64String.split(',')[1];
-              }
-
-              tourImage = Image.memory(
-                base64Decode(base64String),
-                fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) {
-                  print('Base64 image decode error: $error');
-                  return Container(
-                    color: Colors.grey.shade200,
-                    child: const Center(child: Icon(Icons.broken_image)),
-                  );
-                },
-              );
-            } catch (e) {
-              print('Base64 decode error: $e');
-              tourImage = Container(
-                color: Colors.grey.shade200,
-                child: const Center(child: Icon(Icons.image_not_supported)),
-              );
-            }
-          } else {
-            // Varsayılan resim
-            tourImage = Image.network(
-              'https://gabalatours.com/wp-content/uploads/2022/07/things-to-do-in-gabala-1.jpg',
-              fit: BoxFit.cover,
-            );
-          }
+          Widget tourImage = _getTourImageWidget(booking);
 
           return SingleChildScrollView(
             child: Column(
@@ -232,7 +173,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Tour Name - önce tour nesnesini, sonra normal tour name'i kontrol et
+                      // Tour Name - first check tour object, then tour name from booking
                       Text(
                         booking.tour?.tourName.isNotEmpty == true
                             ? booking.tour!.tourName
@@ -244,11 +185,11 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                       ),
                       const SizedBox(height: 4),
 
-                      // ID ve Durum
+                      // ID and Status
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('ID: ${booking.orderId.substring(0, 8)}...',
+                          Text('ID: ${booking.orderId}',
                               style:
                                   TextStyle(color: Colors.grey, fontSize: 12)),
                           Container(
@@ -259,7 +200,9 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: Text(
-                              booking.status,
+                              booking.status == "Pending"
+                                  ? "APPROVED"
+                                  : booking.status,
                               style: TextStyle(color: Colors.blue),
                             ),
                           )
@@ -269,7 +212,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                       const SizedBox(height: 20),
                       // Kişisel Bilgiler
                       const Text(
-                        'KİŞİSEL BİLGİLER',
+                        'PERSONAL INFORMATION',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -291,13 +234,13 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                       _buildDetailItem(
                         icon: Icons.group_outlined,
                         title: 'Guest Count',
-                        value: '${booking.guestCount} Adults',
+                        value: '${getCarCapacity(booking.autoType)}',
                       ),
 
                       // Tur Bilgileri
                       const SizedBox(height: 12),
                       const Text(
-                        'TUR BİLGİLERİ',
+                        'TOUR INFORMATION',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -336,7 +279,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                       // Ödeme Bilgileri
                       const SizedBox(height: 12),
                       const Text(
-                        'ÖDEME BİLGİLERİ',
+                        'PAYMENT INFORMATION',
                         style: TextStyle(
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
@@ -350,6 +293,15 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                         title: 'Payment Type',
                         value: getPaymentTypeName(booking.cashOrCahless),
                       ),
+
+                      // Total Price - artık _buildDetailItem ile gösteriliyor
+                      _buildDetailItem(
+                        icon: Icons.calculate,
+                        title: 'Total Price',
+                        value: '${booking.totalPrice.toStringAsFixed(2)} AZN',
+                        isHighlighted: false,
+                      ),
+
                       _buildDetailItem(
                         icon: Icons.money,
                         title: 'Paid Amount',
@@ -361,7 +313,7 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                         value: formattedOrderDate,
                       ),
 
-                      // Yorum
+                      // Comment
                       if (booking.comment.isNotEmpty)
                         _buildDetailItem(
                           icon: Icons.comment,
@@ -370,36 +322,6 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                         ),
 
                       const SizedBox(height: 20),
-                      // Toplam Fiyat
-                      Container(
-                        padding: const EdgeInsets.all(16),
-                        decoration: BoxDecoration(
-                          color: Colors.blue.withOpacity(0.1),
-                          borderRadius: BorderRadius.circular(12),
-                          border:
-                              Border.all(color: Colors.blue.withOpacity(0.3)),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            const Text(
-                              'Total Price',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                            Text(
-                              '${booking.totalPrice.toStringAsFixed(2)} AZN',
-                              style: const TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -437,10 +359,26 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
     }
   }
 
+  String getCarCapacity(int autoType) {
+    switch (autoType) {
+      case 0:
+        return '1-3 Pax';
+      case 1:
+        return '1-4 Pax';
+      case 2:
+        return '1-6 Pax';
+      case 3:
+        return '1-12 Pax';
+      default:
+        return 'Unknown';
+    }
+  }
+
   Widget _buildDetailItem({
     required IconData icon,
     required String title,
     required String value,
+    bool isHighlighted = false,
   }) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
@@ -462,15 +400,79 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                 const SizedBox(height: 4),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w500,
+                    color: isHighlighted ? Colors.blue : Colors.black,
                   ),
                 ),
               ],
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _getTourImageWidget(dynamic booking) {
+    // Önce tour nesnesindeki resmi kontrol et
+    String imageData = '';
+    if (booking.tour != null && booking.tour!.tourImages.isNotEmpty) {
+      imageData = booking.tour!.tourImages.first.tourImgageName;
+      print('Tour image found from booking.tour');
+    } else if (booking.tourImageName.isNotEmpty) {
+      imageData = booking.tourImageName;
+      print('Tour image found from booking.tourImageName');
+    }
+
+    if (imageData.startsWith('http')) {
+      // HTTP URL ise NetworkImage kullan
+      return Image.network(
+        imageData,
+        fit: BoxFit.cover,
+        errorBuilder: (context, error, stackTrace) {
+          print('Image load error: $error');
+          return Container(
+            color: Colors.grey.shade200,
+            child: const Center(child: Icon(Icons.error)),
+          );
+        },
+      );
+    } else if (imageData.isNotEmpty &&
+        (imageData.startsWith('/9j/') || imageData.startsWith('data:image'))) {
+      // Base64 encoded image
+      try {
+        String base64String = imageData;
+        // If data:image starts with prefix, extract only base64 part
+        if (base64String.contains(',')) {
+          base64String = base64String.split(',')[1];
+        }
+
+        return Image.memory(
+          base64Decode(base64String),
+          fit: BoxFit.cover,
+          errorBuilder: (context, error, stackTrace) {
+            print('Base64 image decode error: $error');
+            return Container(
+              color: Colors.grey.shade200,
+              child: const Center(child: Icon(Icons.broken_image)),
+            );
+          },
+        );
+      } catch (e) {
+        print('Base64 decode error: $e');
+        return Container(
+          color: Colors.grey.shade200,
+          child: const Center(child: Icon(Icons.image_not_supported)),
+        );
+      }
+    }
+
+    // Varsayılan resim
+    return Container(
+      color: Colors.grey.shade200,
+      child: const Center(
+        child: Icon(Icons.image, size: 48, color: Colors.grey),
       ),
     );
   }
