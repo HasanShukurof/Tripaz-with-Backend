@@ -456,102 +456,119 @@ class _DetailTourScreenState extends State<DetailTourScreen> {
             decoration: BoxDecoration(
               border: Border.all(color: Colors.grey.shade300),
             ),
-            child: Padding(
-              padding: const EdgeInsets.only(
-                  bottom: 10, top: 10, left: 16, right: 16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Row(
-                      children: [
-                        Text(
-                          "${tourDetails.tourPrice ?? '0'} AZN",
-                          style: const TextStyle(
-                              color: Color(0XFFF0A7BAB),
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              children: [
+                // Fiyat kısmı
+                Expanded(
+                  flex: 2,
+                  child: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    alignment: Alignment.centerLeft,
+                    child: RichText(
+                      text: TextSpan(
+                        children: [
+                          TextSpan(
+                            text: "${tourDetails.tourPrice ?? '0'} AZN",
+                            style: const TextStyle(
+                              color: Color(0xFF0A7BAB),
                               fontSize: 21,
-                              fontWeight: FontWeight.bold),
-                        ),
-                        const Text(
-                          " / 1-3 pax",
-                          style: TextStyle(color: Color(0XFFF0A7BAB)),
-                        ),
-                      ],
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const TextSpan(
+                            text: " / 1-3 pax",
+                            style: TextStyle(
+                              color: Color(0xFF0A7BAB),
+                              fontSize: 14.0,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  Expanded(
-                    child: GestureDetector(
-                      onTap: () async {
-                        // Kullanıcı giriş durumunu kontrol et
-                        final SharedPreferences prefs =
-                            await SharedPreferences.getInstance();
-                        final bool isLoggedIn =
-                            prefs.getString('access_token') != null;
+                ),
 
-                        if (isLoggedIn) {
-                          // Kullanıcı giriş yapmışsa, booking sayfasına yönlendir
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) =>
-                                  DetailBookingScreen(tourId: widget.tourId),
+                const SizedBox(width: 8),
+
+                // Book Now butonu
+                Expanded(
+                  flex: 3,
+                  child: GestureDetector(
+                    onTap: () async {
+                      // Kullanıcı giriş durumunu kontrol et
+                      final SharedPreferences prefs =
+                          await SharedPreferences.getInstance();
+                      final bool isLoggedIn =
+                          prefs.getString('access_token') != null;
+
+                      if (isLoggedIn) {
+                        // Kullanıcı giriş yapmışsa, booking sayfasına yönlendir
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) =>
+                                DetailBookingScreen(tourId: widget.tourId),
+                          ),
+                        );
+                      } else {
+                        // Kullanıcı giriş yapmamışsa, login gerekliliği hakkında bilgilendir
+                        showDialog(
+                          context: context,
+                          builder: (BuildContext context) {
+                            return AlertDialog(
+                              title: const Text('Login Required'),
+                              content:
+                                  const Text('You must log in to book a tour.'),
+                              actions: [
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context)
+                                        .pop(); // Dialog'u kapat
+                                  },
+                                  child: const Text('Cancel'),
+                                ),
+                                TextButton(
+                                  onPressed: () {
+                                    Navigator.of(context)
+                                        .pop(); // Dialog'u kapat
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                          builder: (context) =>
+                                              const LoginScreen()),
+                                    );
+                                  },
+                                  child: const Text('Login'),
+                                ),
+                              ],
+                            );
+                          },
+                        );
+                      }
+                    },
+                    child: const Card(
+                      color: Color(0xFF0FA3E2),
+                      margin: EdgeInsets.zero,
+                      child: SizedBox(
+                        height: 50,
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: Text(
+                            "Book Now",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              color: Colors.white,
+                              fontSize: 15,
                             ),
-                          );
-                        } else {
-                          // Kullanıcı giriş yapmamışsa, login gerekliliği hakkında bilgilendir
-                          showDialog(
-                            context: context,
-                            builder: (BuildContext context) {
-                              return AlertDialog(
-                                title: const Text('Login Required'),
-                                content: const Text(
-                                    'You must log in to book a tour.'),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context)
-                                          .pop(); // Dialog'u kapat
-                                    },
-                                    child: const Text('Cancel'),
-                                  ),
-                                  TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context)
-                                          .pop(); // Dialog'u kapat
-                                      Navigator.push(
-                                        context,
-                                        MaterialPageRoute(
-                                            builder: (context) =>
-                                                const LoginScreen()),
-                                      );
-                                    },
-                                    child: const Text('Login'),
-                                  ),
-                                ],
-                              );
-                            },
-                          );
-                        }
-                      },
-                      child: const Card(
-                        color: Color(0XFFF0FA3E2),
-                        child: SizedBox(
-                          height: 50,
-                          child: Align(
-                            alignment: Alignment.center,
-                            child: Text(
-                              "Book Now",
-                              style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  color: Colors.white,
-                                  fontSize: 15),
-                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ),
                     ),
                   ),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
         ],
