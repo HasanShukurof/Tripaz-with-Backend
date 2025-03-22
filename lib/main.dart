@@ -8,6 +8,7 @@ import 'viewmodels/login_viewmodel.dart';
 import 'viewmodels/wish_list_view_model.dart';
 import 'views/login_screen.dart';
 import 'viewmodels/detail_booking_view_model.dart';
+import 'viewmodels/booking_view_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'views/onboarding_screen.dart';
 import 'widgets/bottom_navigation_bar.dart';
@@ -48,6 +49,16 @@ void main() {
           update: (context, mainRepo, previousDetailBookingViewModel) =>
               previousDetailBookingViewModel ??
               DetailBookingViewModel(
+                Provider.of<MainRepository>(context, listen: false),
+              ),
+        ),
+        ChangeNotifierProxyProvider<MainRepository, BookingViewModel>(
+          create: (context) => BookingViewModel(
+            Provider.of<MainRepository>(context, listen: false),
+          ),
+          update: (context, mainRepo, previousBookingViewModel) =>
+              previousBookingViewModel ??
+              BookingViewModel(
                 Provider.of<MainRepository>(context, listen: false),
               ),
         ),

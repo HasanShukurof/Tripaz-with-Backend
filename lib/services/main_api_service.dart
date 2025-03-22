@@ -1,7 +1,7 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:io';
-import '../models/tour_model.dart';
+import '../models/tour_model.dart' as tour;
 import '../models/user_login_model.dart';
 import '../models/detail_tour_model.dart';
 import '../models/user_model.dart';
@@ -10,6 +10,8 @@ import '../models/detail_booking_model.dart';
 import '../models/car_type_model.dart'; // CarTypeModel import edildi
 import '../models/payment_request_model.dart';
 import '../models/payment_response_model.dart';
+import '../models/booking_request_model.dart'; // Yeni model import edildi
+import '../models/booking_model.dart'; // BookingModel import edildi
 
 class MainApiService {
   final Dio _dio = Dio();
@@ -58,7 +60,7 @@ class MainApiService {
     }
   }
 
-  Future<List<TourModel>> fetchTours(String token) async {
+  Future<List<tour.TourModel>> fetchTours(String token) async {
     final response = await _dio.get(
       'https://tripaz.az/api/Tour/tours',
       options: Options(headers: {
@@ -71,14 +73,15 @@ class MainApiService {
 
     if (response.statusCode == 200) {
       List<dynamic> data = response.data;
-      final tourList = data.map((tour) => TourModel.fromJson(tour)).toList();
+      final tourList =
+          data.map((item) => tour.TourModel.fromJson(item)).toList();
       return tourList;
     } else {
       throw Exception('Failed to load tours');
     }
   }
 
-  Future<TourModel> fetchTour(int tourId, String token) async {
+  Future<tour.TourModel> fetchTour(int tourId, String token) async {
     final response = await _dio.get(
       'https://tripaz.az/api/Tour/tours/$tourId',
       options: Options(headers: {
@@ -89,7 +92,7 @@ class MainApiService {
 
     if (response.statusCode == 200) {
       print("Tour data for tourId ($tourId): ${response.data}");
-      return TourModel.fromJson(response.data);
+      return tour.TourModel.fromJson(response.data);
     } else {
       print('API Error: ${response.statusCode} - ${response.statusMessage}');
       throw Exception('Failed to load tour');
@@ -359,6 +362,42 @@ class MainApiService {
     }
   }
 
+  Future<dynamic> createBooking(BookingRequestModel model) async {
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      String? token = prefs.getString('access_token');
+
+      print('Creating booking with data: ${model.toJson()}');
+      print('Using token: $token');
+
+      final response = await _dio.post(
+        'https://tripaz.az/api/Tour/orders',
+        data: model.toJson(),
+        options: Options(
+          headers: {
+            'accept': 'text/plain',
+            'Authorization': 'Bearer $token',
+            'Content-Type': 'application/json',
+          },
+          validateStatus: (status) => true,
+        ),
+      );
+
+      print('Booking API Response Status Code: ${response.statusCode}');
+      print('Booking API Response Data: ${response.data}');
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        return response.data;
+      } else {
+        throw Exception(
+            'Booking creation failed with status ${response.statusCode}: ${response.data}');
+      }
+    } catch (e) {
+      print('Create Booking Error in API: $e');
+      rethrow;
+    }
+  }
+
   Future<void> deleteUser(String token) async {
     try {
       final response = await _dio.post(
@@ -381,7 +420,7 @@ class MainApiService {
     }
   }
 
-  Future<List<TourModel>> fetchPublicTours() async {
+  Future<List<tour.TourModel>> fetchPublicTours() async {
     try {
       final response = await _dio.get(
         'https://tripaz.az/api/Tour/ios/tours',
@@ -394,7 +433,8 @@ class MainApiService {
 
       if (response.statusCode == 200) {
         List<dynamic> data = response.data;
-        final tourList = data.map((tour) => TourModel.fromJson(tour)).toList();
+        final tourList =
+            data.map((item) => tour.TourModel.fromJson(item)).toList();
         return tourList;
       } else {
         throw Exception('Failed to load tours');
@@ -425,6 +465,56 @@ class MainApiService {
     } catch (e) {
       print('Public tour detail fetch error: $e');
       throw Exception('Failed to load tour details: $e');
+    }
+  }
+
+  // Kullanıcının rezervasyonlarını getir
+  Future<List<BookingModel>> fetchBookings(String token) async {
+    try {
+      final response = await _dio.get(
+        'https://tripaz.az/api/Tour/orders',
+        options: Options(headers: {
+          'accept': 'text/plain',
+          'Authorization': 'Bearer $token',
+          'Content-Type': 'application/json',
+        }),
+      );
+
+      print('Bookings API Response: ${response.data}');
+
+      if (response.statusCode == 200) {
+        if (response.data is List) {
+          List<dynamic> data = response.data;
+          return data.map((booking) => BookingModel.fromJson(booking)).toList();
+        } else {
+          throw Exception('Beklenmedik yanıt formatı: Liste bekleniyor');
+        }
+      } else {
+        throw Exception('Rezervasyonlar yüklenemedi: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Rezervasyonları getirme hatası: $e');
+      rethrow;
+    }
+  }
+
+  // Belirli bir rezervasyonun detaylarını getir - aynı API'yi kullanır
+  Future<BookingModel> fetchBookingDetail(String orderId, String token) async {
+    try {
+      // Tüm rezervasyonları getir ve içinden ID ile eşleşeni bul
+      final allBookings = await fetchBookings(token);
+
+      // OrderId ile eşleşen rezervasyonu bul
+      final bookingDetail = allBookings.firstWhere(
+        (booking) => booking.orderId == orderId,
+        orElse: () => throw Exception('Rezervasyon bulunamadı: $orderId'),
+      );
+
+      print('Booking detail found from list: ${bookingDetail.tourName}');
+      return bookingDetail;
+    } catch (e) {
+      print('Rezervasyon detayı getirme hatası: $e');
+      rethrow;
     }
   }
 }

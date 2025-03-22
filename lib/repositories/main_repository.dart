@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../models/tour_model.dart';
+import '../models/tour_model.dart' as tour;
 import '../models/user_login_model.dart';
 import '../services/main_api_service.dart';
 import '../models/detail_tour_model.dart';
@@ -10,6 +10,8 @@ import '../models/detail_booking_model.dart';
 import '../models/car_type_model.dart'; // CarTypeModel import edildi
 import '../models/payment_request_model.dart';
 import '../models/payment_response_model.dart';
+import '../models/booking_request_model.dart'; // Yeni model import edildi
+import '../models/booking_model.dart'; // BookingModel import edildi
 
 class MainRepository {
   final MainApiService _mainApiService;
@@ -23,7 +25,7 @@ class MainRepository {
     return await _mainApiService.login(username, password);
   }
 
-  Future<List<TourModel>> getTours() async {
+  Future<List<tour.TourModel>> getTours() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('access_token');
 
@@ -33,7 +35,7 @@ class MainRepository {
     return await _mainApiService.fetchTours(token);
   }
 
-  Future<TourModel> getTour(int tourId) async {
+  Future<tour.TourModel> getTour(int tourId) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('access_token');
 
@@ -160,6 +162,17 @@ class MainRepository {
     }
   }
 
+  Future<dynamic> createBooking(BookingRequestModel model) async {
+    try {
+      final response = await _mainApiService.createBooking(model);
+      print('Booking created successfully');
+      return response;
+    } catch (e) {
+      print('Booking creation error in repository: $e');
+      throw Exception('Booking creation failed: $e');
+    }
+  }
+
   Future<void> deleteUser() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('access_token');
@@ -170,11 +183,42 @@ class MainRepository {
     return await _mainApiService.deleteUser(token);
   }
 
-  Future<List<TourModel>> getPublicTours() async {
+  Future<List<tour.TourModel>> getPublicTours() async {
     return await _mainApiService.fetchPublicTours();
   }
 
   Future<DetailTourModel> getPublicTourDetails(int tourId) async {
     return await _mainApiService.fetchPublicTourDetails(tourId);
+  }
+
+  // Kullanıcının rezervasyonlarını getir
+  Future<List<BookingModel>> getBookings() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('access_token');
+
+    if (token == null || token.isEmpty) {
+      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+    }
+    return await _mainApiService.fetchBookings(token);
+  }
+
+  // Belirli bir rezervasyonun detaylarını getir
+  Future<BookingModel> getBookingDetail(String orderId) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    String? token = prefs.getString('access_token');
+
+    if (token == null || token.isEmpty) {
+      throw Exception('Token bulunamadı. Kullanıcı giriş yapmamış olabilir.');
+    }
+
+    // Tek tek detay çekmek yerine tüm rezervasyon listesini çekip içinden ilgili rezervasyonu buluyoruz
+    final bookings = await _mainApiService.fetchBookings(token);
+
+    final booking = bookings.firstWhere(
+      (booking) => booking.orderId == orderId,
+      orElse: () => throw Exception('Rezervasyon bulunamadı: $orderId'),
+    );
+
+    return booking;
   }
 }
