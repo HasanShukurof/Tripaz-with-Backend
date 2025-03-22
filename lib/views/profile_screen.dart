@@ -11,6 +11,8 @@ import 'login_screen.dart';
 import 'booking_screen.dart';
 import 'register_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'terms_condition_screen.dart';
+import 'privacy_policy_screen.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key, this.userId});
@@ -397,41 +399,59 @@ class _ProfileScreenState extends State<ProfileScreen> {
               style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
             ),
             const SizedBox(height: 20),
-            Container(
-              height: 50,
-              decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade400),
-                  borderRadius: BorderRadius.circular(8)),
-              child: const Row(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(left: 8),
-                    child: Icon(Icons.edit_document),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(left: 20),
-                    child: Text('Terms and Condition'),
-                  ),
-                ],
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const TermsConditionScreen()),
+                );
+              },
+              child: Container(
+                height: 50,
+                decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade400),
+                    borderRadius: BorderRadius.circular(8)),
+                child: const Row(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(left: 8),
+                      child: Icon(Icons.edit_document),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(left: 20),
+                      child: Text('Terms and Condition'),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 20),
-            Container(
-              height: 50,
-              decoration: BoxDecoration(
-                  border: Border.all(color: Colors.grey.shade400),
-                  borderRadius: BorderRadius.circular(8)),
-              child: const Row(
-                children: [
-                  Padding(
-                    padding: EdgeInsets.only(left: 8),
-                    child: Icon(Icons.policy_rounded),
-                  ),
-                  Padding(
-                    padding: EdgeInsets.only(left: 20),
-                    child: Text('Privacy policy'),
-                  ),
-                ],
+            GestureDetector(
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const PrivacyPolicyScreen()),
+                );
+              },
+              child: Container(
+                height: 50,
+                decoration: BoxDecoration(
+                    border: Border.all(color: Colors.grey.shade400),
+                    borderRadius: BorderRadius.circular(8)),
+                child: const Row(
+                  children: [
+                    Padding(
+                      padding: EdgeInsets.only(left: 8),
+                      child: Icon(Icons.policy_rounded),
+                    ),
+                    Padding(
+                      padding: EdgeInsets.only(left: 20),
+                      child: Text('Privacy policy'),
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 30),
