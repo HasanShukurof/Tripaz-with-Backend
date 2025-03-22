@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:tripaz_app/views/home_screen.dart';
 import 'package:tripaz_app/views/notification_screen.dart';
 import 'package:tripaz_app/views/profile_screen.dart';
 import 'package:tripaz_app/views/wish_list_screen.dart';
+import 'package:tripaz_app/viewmodels/home_view_model.dart';
 
 class BottomNavBar extends StatefulWidget {
   const BottomNavBar({super.key});
@@ -18,6 +20,11 @@ class _BottomNavBarState extends State<BottomNavBar> {
   @override
   void initState() {
     super.initState();
+    // Kullanıcı bilgilerini yeniden yükle
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<HomeViewModel>(context, listen: false).loadUser();
+    });
+
     screens = [
       const HomeScreen(),
       const WishListScreen(),
@@ -27,6 +34,11 @@ class _BottomNavBarState extends State<BottomNavBar> {
   }
 
   void _onItemTapped(int index) {
+    // Özellikle profil sekmesine tıklandığında, kullanıcı bilgilerini yenile
+    if (index == 3) {
+      Provider.of<HomeViewModel>(context, listen: false).loadUser();
+    }
+
     setState(() {
       myCurrentIndex = index;
     });

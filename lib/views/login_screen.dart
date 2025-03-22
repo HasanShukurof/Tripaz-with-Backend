@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../viewmodels/login_viewmodel.dart';
 import '../widgets/bottom_navigation_bar.dart';
 import 'register_screen.dart';
+import '../viewmodels/home_view_model.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -59,6 +60,10 @@ class _LogInScreenState extends State<LoginScreen> {
       );
 
       if (user != null && mounted) {
+        final homeViewModel =
+            Provider.of<HomeViewModel>(context, listen: false);
+        await homeViewModel.loadUser();
+
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(builder: (context) => const BottomNavBar()),

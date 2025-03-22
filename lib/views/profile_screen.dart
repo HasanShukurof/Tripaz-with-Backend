@@ -30,9 +30,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
     super.initState();
     _checkLoginStatus();
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      if (isLoggedIn) {
-        Provider.of<HomeViewModel>(context, listen: false).loadUser();
-      }
+      final viewModel = Provider.of<HomeViewModel>(context, listen: false);
+      viewModel.loadUser();
     });
   }
 

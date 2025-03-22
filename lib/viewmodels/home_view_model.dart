@@ -58,14 +58,24 @@ class HomeViewModel extends ChangeNotifier {
   }
 
   Future<void> loadUser() async {
-    if (_isUserLoaded) {
-      print("Kullanıcı bilgisi daha önce yuklendi. Tekrar yüklenmeyecek.");
-      return;
-    }
-
     try {
       isUserLoading = true;
       notifyListeners();
+
+      // Kullanıcının giriş yapıp yapmadığını kontrol et
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('access_token');
+
+      if (token == null || token.isEmpty) {
+        // Token yoksa kullanıcı misafir demektir
+        user = null;
+        _isUserLoaded = false;
+        isUserLoading = false;
+        notifyListeners();
+        return;
+      }
+
+      // Token varsa kullanıcı bilgilerini yükle
       user = await _repo.getUser();
       _isUserLoaded = true;
     } catch (e) {
