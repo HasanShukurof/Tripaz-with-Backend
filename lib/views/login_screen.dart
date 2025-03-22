@@ -77,6 +77,13 @@ class _LogInScreenState extends State<LoginScreen> {
     }
   }
 
+  void _continueAsGuest() {
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => const BottomNavBar()),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final loginViewModel = Provider.of<LoginViewModel>(context);
@@ -170,6 +177,26 @@ class _LogInScreenState extends State<LoginScreen> {
                                   "Login",
                                   style: TextStyle(
                                     color: Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 20),
+                            SizedBox(
+                              width: double.infinity,
+                              child: OutlinedButton(
+                                style: OutlinedButton.styleFrom(
+                                  side: const BorderSide(
+                                      color: Color(0XFFF39C4FF)),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                                onPressed: _continueAsGuest,
+                                child: const Text(
+                                  "Continue as Guest",
+                                  style: TextStyle(
+                                    color: Color(0XFFF39C4FF),
                                     fontWeight: FontWeight.bold,
                                   ),
                                 ),

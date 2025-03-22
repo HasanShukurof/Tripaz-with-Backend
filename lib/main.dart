@@ -122,7 +122,7 @@ class TripazApp extends StatelessWidget {
                       );
                     }
                     return onboardingSnapshot.data == true
-                        ? const BottomNavBar() // Onboarding tamamlanmışsa HomeScreen (BottomNavBar)
+                        ? const LoginScreen() // Onboarding tamamlanmışsa artık LoginScreen'e yönlendir
                         : const OnboardingScreen();
                   },
                 ),

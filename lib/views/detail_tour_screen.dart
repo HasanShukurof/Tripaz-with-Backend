@@ -504,7 +504,7 @@ class _DetailTourScreenState extends State<DetailTourScreen> {
                               return AlertDialog(
                                 title: const Text('Login Required'),
                                 content: const Text(
-                                    'You must log in to add to favorites.'),
+                                    'You must log in to book a tour.'),
                                 actions: [
                                   TextButton(
                                     onPressed: () {

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/onboarding_model.dart';
-import '../widgets/bottom_navigation_bar.dart';
+import '../views/login_screen.dart';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -36,139 +36,180 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: Column(
+      body: Stack(
         children: [
-          const SizedBox(height: 50), // Status bar için boşluk
-          Align(
-            // Skip butonu için
-            alignment: Alignment.centerRight,
-            child: Padding(
-              padding: const EdgeInsets.only(right: 20),
-              child: TextButton(
-                onPressed: () async {
-                  // Onboarding'i tamamlandı olarak işaretle
-                  final prefs = await SharedPreferences.getInstance();
-                  await prefs.setBool('onboarding_completed', true);
-
-                  if (mounted) {
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const BottomNavBar(),
-                      ),
+          // Tüm ekran için içerik
+          Column(
+            children: [
+              Expanded(
+                child: PageView.builder(
+                  controller: _pageController,
+                  itemCount: onboardingData.length,
+                  onPageChanged: (index) {
+                    setState(() {
+                      currentIndex = index;
+                    });
+                  },
+                  itemBuilder: (context, index) {
+                    return Stack(
+                      fit: StackFit.expand,
+                      children: [
+                        // Resim tüm ekranı kaplasın
+                        Positioned(
+                          top: 0,
+                          left: 0,
+                          right: 0,
+                          bottom: MediaQuery.of(context).size.height * 0.35,
+                          child: Container(
+                            decoration: BoxDecoration(
+                              image: DecorationImage(
+                                image: AssetImage(onboardingData[index].image),
+                                fit: BoxFit.cover,
+                              ),
+                            ),
+                          ),
+                        ),
+                        // İçerik
+                        Positioned(
+                          bottom: 0,
+                          left: 0,
+                          right: 0,
+                          height: MediaQuery.of(context).size.height * 0.35,
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 20),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: const BorderRadius.only(
+                                topLeft: Radius.circular(30),
+                                topRight: Radius.circular(30),
+                              ),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 10,
+                                  offset: const Offset(0, -5),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                Text(
+                                  onboardingData[index].title,
+                                  style: const TextStyle(
+                                    fontSize: 24,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                  textAlign: TextAlign.center,
+                                ),
+                                const SizedBox(height: 16),
+                                Text(
+                                  onboardingData[index].description,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.grey.shade600,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ],
                     );
-                  }
-                },
-                child: const Text(
-                  'Skip',
-                  style: TextStyle(
-                    color: Color(0XFFF39C4FF),
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  },
                 ),
               ),
-            ),
-          ),
-          Expanded(
-            child: PageView.builder(
-              controller: _pageController,
-              itemCount: onboardingData.length,
-              onPageChanged: (index) {
-                setState(() {
-                  currentIndex = index;
-                });
-              },
-              itemBuilder: (context, index) {
-                return Column(
+              Padding(
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Container(
-                      height: MediaQuery.of(context).size.height *
-                          0.6, // Ekranın %60'ını kaplasın
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        image: DecorationImage(
-                          image: AssetImage(onboardingData[index].image),
-                          fit: BoxFit.cover,
+                    Row(
+                      children: List.generate(
+                        onboardingData.length,
+                        (index) => buildDot(index: index),
+                      ),
+                    ),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: const Color(0XFFF39C4FF),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 30,
+                          vertical: 15,
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 30),
-                    Text(
-                      onboardingData[index].title,
-                      style: const TextStyle(
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 40),
+                      onPressed: () async {
+                        if (currentIndex == onboardingData.length - 1) {
+                          // Son sayfadaysa, onboarding'i tamamlandı olarak işaretle
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setBool('onboarding_completed', true);
+
+                          if (mounted) {
+                            Navigator.pushReplacement(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginScreen(),
+                              ),
+                            );
+                          }
+                        } else {
+                          _pageController.nextPage(
+                            duration: const Duration(milliseconds: 300),
+                            curve: Curves.easeIn,
+                          );
+                        }
+                      },
                       child: Text(
-                        onboardingData[index].description,
-                        textAlign: TextAlign.center,
-                        style: TextStyle(
+                        currentIndex == onboardingData.length - 1
+                            ? "Get Started"
+                            : "Next",
+                        style: const TextStyle(
+                          color: Colors.white,
                           fontSize: 16,
-                          color: Colors.grey.shade600,
                         ),
                       ),
                     ),
                   ],
-                );
-              },
-            ),
+                ),
+              ),
+            ],
           ),
-          Padding(
-            padding: const EdgeInsets.all(20),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Row(
-                  children: List.generate(
-                    onboardingData.length,
-                    (index) => buildDot(index: index),
-                  ),
-                ),
-                ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0XFFF39C4FF),
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 30,
-                      vertical: 15,
-                    ),
-                  ),
-                  onPressed: () async {
-                    if (currentIndex == onboardingData.length - 1) {
-                      // Son sayfadaysa, onboarding'i tamamlandı olarak işaretle
-                      final prefs = await SharedPreferences.getInstance();
-                      await prefs.setBool('onboarding_completed', true);
+          // Skip butonu resmin üzerine overlay olarak yerleştirildi
+          Positioned(
+            top: MediaQuery.of(context).padding.top + 10,
+            right: 20,
+            child: TextButton(
+              onPressed: () async {
+                // Onboarding'i tamamlandı olarak işaretle
+                final prefs = await SharedPreferences.getInstance();
+                await prefs.setBool('onboarding_completed', true);
 
-                      if (mounted) {
-                        Navigator.pushReplacement(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const BottomNavBar(),
-                          ),
-                        );
-                      }
-                    } else {
-                      _pageController.nextPage(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeIn,
-                      );
-                    }
-                  },
-                  child: Text(
-                    currentIndex == onboardingData.length - 1
-                        ? "Get Started"
-                        : "Next",
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
+                if (mounted) {
+                  Navigator.pushReplacement(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => const LoginScreen(),
                     ),
-                  ),
+                  );
+                }
+              },
+              style: TextButton.styleFrom(
+                foregroundColor: Colors.white,
+                padding: EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                backgroundColor: Colors.black.withOpacity(0.2),
+                shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(20)),
+              ),
+              child: const Text(
+                'Skip',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
                 ),
-              ],
+              ),
             ),
           ),
         ],
