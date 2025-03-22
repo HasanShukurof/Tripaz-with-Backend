@@ -189,21 +189,36 @@ class _BookingDetailScreenState extends State<BookingDetailScreen> {
                       Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
-                          Text('ID: ${booking.orderId}',
-                              style:
-                                  TextStyle(color: Colors.grey, fontSize: 12)),
-                          Container(
-                            padding: EdgeInsets.symmetric(
-                                horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: Colors.blue.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(12),
-                            ),
+                          Expanded(
+                            flex: 3,
                             child: Text(
-                              booking.status == "Pending"
-                                  ? "APPROVED"
-                                  : booking.status,
-                              style: TextStyle(color: Colors.blue),
+                              'ID: ${booking.orderId}',
+                              style:
+                                  TextStyle(color: Colors.grey, fontSize: 12),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            flex: 2,
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: Colors.blue.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              alignment: Alignment.center,
+                              child: Text(
+                                booking.status == "Pending"
+                                    ? "APPROVED"
+                                    : booking.status,
+                                style: const TextStyle(
+                                  color: Colors.blue,
+                                  fontSize: 12,
+                                ),
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
                           )
                         ],
