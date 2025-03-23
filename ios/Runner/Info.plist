@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Uygulamanızın galeriden resim seçmesine izin verin.</string>
+	<string>Please allow the app to access your photo library to select images.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
