@@ -3,7 +3,7 @@
 <plist version="1.0">
 <dict>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>Please allow the app to access your photo library to select images.</string>
+	<string>Please allow the app to access your photo library so you can select a profile picture. This image will only be visible to you in your profile section and will be securely stored in our database.</string>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>$(DEVELOPMENT_LANGUAGE)</string>
 	<key>CFBundleDisplayName</key>
