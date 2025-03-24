@@ -321,6 +321,29 @@ class MainApiService {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     String? token = prefs.getString('access_token');
 
+    // Request verilerini logla
+    print('========== CREATE PAYMENT REQUEST ==========');
+    print('Payment Request Parameters:');
+    print('guestName: ${model.guestName}');
+    print('phoneNumber: ${model.phoneNumber}');
+    print('autoType: ${model.autoType}');
+    print('airportPickupEnabled: ${model.airportPickupEnabled}');
+    print('pickupDate: ${model.pickupDate}');
+    print('pickupTime: ${model.pickupTime}');
+    print('comment: ${model.comment}');
+    print('tourStartDate: ${model.tourStartDate}');
+    print('tourEndDate: ${model.tourEndDate}');
+    print('nightCount: ${model.nightCount}');
+    print('totalPrice: ${model.totalPrice}');
+    print('tourId: ${model.tourId}');
+    print('carId: ${model.carId}');
+    print('orderDate: ${model.orderDate}');
+    print('cashOrCahless: ${model.cashOrCahless}');
+    print('payAmount: ${model.payAmount}');
+    print('Payment Request JSON:');
+    print(model.toJson());
+    print('=========================================');
+
     final response = await _dio.post(
       'https://tripaz.az/api/Payriff/create-payment',
       data: model.toJson(),
@@ -333,8 +356,21 @@ class MainApiService {
       ),
     );
 
+    // Response verilerini logla
+    print('========== CREATE PAYMENT RESPONSE ==========');
+    print('Status code: ${response.statusCode}');
+    print('Raw response data: ${response.data}');
+    print('============================================');
+
     if (response.statusCode == 200) {
-      return PaymentResponseModel.fromJson(response.data);
+      final result = PaymentResponseModel.fromJson(response.data);
+      print('Parsed PaymentResponseModel:');
+      print('orderId: ${result.orderId}');
+      print('code: ${result.code}');
+      print('amount: ${result.amount}');
+      print('paymentUrl: ${result.payload.paymentUrl}');
+      print('============================================');
+      return result;
     } else {
       throw Exception('Payment creation failed');
     }
@@ -459,7 +495,12 @@ class MainApiService {
         sendTimeout: const Duration(minutes: 1),
       );
 
+      print('========== FETCH BOOKINGS REQUEST ==========');
       print('Fetching booking data...');
+      print('Request Headers:');
+      print('Authorization: Bearer ${token.substring(0, 15)}...');
+      print('Content-Type: application/json');
+      print('accept: text/plain');
 
       // API'ye sayfalama parametreleri ekleyerek veri miktarını sınırla
       // Not: API'nin bu parametreleri desteklemesi gerekir, eğer desteklemiyorsa
@@ -471,6 +512,11 @@ class MainApiService {
         'sortDir': 'desc' // Yeniden eskiye
       };
 
+      print('Request Query Parameters:');
+      print(queryParams);
+      print('Request URL: https://tripaz.az/api/Tour/orders');
+      print('============================================');
+
       try {
         final response = await _dio.get(
           'https://tripaz.az/api/Tour/orders',
@@ -478,41 +524,36 @@ class MainApiService {
           queryParameters: queryParams,
         );
 
+        print('========== FETCH BOOKINGS RESPONSE ==========');
         // Yanıt boyutu kontrolü
         final responseSize = response.data.toString().length;
+        print('Status Code: ${response.statusCode}');
         print('Booking API Response Size: $responseSize bytes');
 
         if (response.statusCode == 200) {
           if (response.data is List) {
-            List<dynamic> data = response.data;
-
-            // Veri yapısını ve uzunluğunu kontrol et
-            print('Number of bookings: ${data.length}');
-
-            // Eğer liste çok büyükse (150+ kayıt), manuel olarak sınırla
-            if (data.length > 150) {
-              print('Too many bookings, getting only last 20...');
-              data = data.sublist(0, 20); // Only get last 20 bookings
+            print('Response is a list with ${response.data.length} items');
+            // Sadece ilk birkaç öğeyi göster, tam veriyi göstermek çok fazla log oluşturabilir
+            if (response.data.isNotEmpty) {
+              print('Sample first booking item:');
+              print(response.data[0]);
             }
 
-            // Process each booking item individually and apply error handling
+            List<dynamic> data = response.data;
+            print('Converting ${data.length} items to BookingModel objects');
             List<BookingModel> bookings = [];
-            for (var bookingData in data) {
+
+            for (var i = 0; i < data.length; i++) {
               try {
-                final booking = BookingModel.fromJson(bookingData);
+                final booking = BookingModel.fromJson(data[i]);
                 bookings.add(booking);
-              } catch (parseError) {
-                print('Booking parsing error: $parseError');
-                print('Invalid data: $bookingData');
+              } catch (e) {
+                print('Error parsing booking at index $i: $e');
               }
             }
 
-            if (bookings.isEmpty) {
-              print('No bookings found or empty list returned.');
-            } else {
-              print('Total ${bookings.length} bookings fetched successfully.');
-            }
-
+            print('Successfully parsed ${bookings.length} bookings');
+            print('==============================================');
             return bookings;
           } else {
             throw Exception('Beklenmedik yanıt formatı: Liste bekleniyor');

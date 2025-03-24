@@ -15,6 +15,7 @@ class ConfirmBookingScreen extends StatelessWidget {
   final bool isAirportPickup;
   final TimeOfDay? pickupTime;
   final String comment;
+  final int tourId;
 
   const ConfirmBookingScreen({
     super.key,
@@ -30,6 +31,7 @@ class ConfirmBookingScreen extends StatelessWidget {
     required this.isAirportPickup,
     this.pickupTime,
     required this.comment,
+    required this.tourId,
   });
 
   @override
@@ -117,7 +119,7 @@ class ConfirmBookingScreen extends StatelessWidget {
                           endDate: endDate,
                           nightCount: nightCount,
                           totalPrice: totalPrice,
-                          tourId: 1,
+                          tourId: tourId,
                         ),
                       ),
                     );

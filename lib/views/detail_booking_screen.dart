@@ -798,6 +798,7 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
                                       isAirportPickup: isCheckedAirportPickUp,
                                       pickupTime: pickUpTime,
                                       comment: _commentController.text,
+                                      tourId: widget.tourId,
                                     ),
                                   ));
                             } else {
