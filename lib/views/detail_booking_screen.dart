@@ -40,6 +40,8 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
   double tourAirportPrice = 0.0;
   double carPrice = 0.0;
 
+  bool _isWarningShown = false;
+
   void calculate() {
     print('calculate metodu çalıştı');
     if (startDate != null && endDate != null) {
@@ -55,12 +57,15 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
     tourAirportPrice = viewModel.tourAirportPrice;
     carPrice = viewModel.carPrice;
 
-    print('tourPrice: $tourPrice'); // **Bu satırı ekledim**
-    print('tourNightPrice: $tourNightPrice');
-    print('tourAirportPrice: $tourAirportPrice');
-    print('carPrice: $carPrice');
-    print('dayDifference: $dayDifference');
-    print('isCheckedAirportPickUp: $isCheckedAirportPickUp');
+    print('calculate içinde - tourPrice: $tourPrice');
+    print('calculate içinde - tourNightPrice: $tourNightPrice');
+    print('calculate içinde - tourAirportPrice: $tourAirportPrice');
+    print('calculate içinde - carPrice: $carPrice');
+    print('calculate içinde - dayDifference: $dayDifference');
+    print('calculate içinde - isCheckedAirportPickUp: $isCheckedAirportPickUp');
+
+    // Fiyatın 0 olması durumunda kullanıcıya bilgi verecek bir değişkeni ayarla
+    bool isPriceZero = tourPrice <= 0;
 
     setState(() {
       resultAmount =
@@ -69,8 +74,31 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
       if (isCheckedAirportPickUp) {
         resultAmount += tourAirportPrice;
       }
+
+      // Eğer fiyat 0 ise ve API'den veri geldiyse bildirimi göster
+      if (isPriceZero &&
+          !viewModel.isLoading &&
+          viewModel.detailBooking != null) {
+        _showPriceWarning();
+      }
     });
-    print('resultAmount: $resultAmount');
+    print('calculate içinde - resultAmount: $resultAmount');
+  }
+
+  void _showPriceWarning() {
+    // Eğer daha önce uyarı gösterilmediyse göster
+    if (!_isWarningShown) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text(
+                'Tur fiyatı bilgisi şu anda mevcut değil. Lütfen daha sonra tekrar deneyin.'),
+            duration: Duration(seconds: 5),
+          ),
+        );
+      });
+      _isWarningShown = true;
+    }
   }
 
   Future<void> _pickUpTime(BuildContext context) async {
@@ -174,6 +202,8 @@ class _DetailBookingScreenState extends State<DetailBookingScreen> {
   @override
   void initState() {
     super.initState();
+    _isWarningShown =
+        false; // Uyarının gösterilip gösterilmediğini takip etmek için
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final viewModel =
           Provider.of<DetailBookingViewModel>(context, listen: false);

@@ -18,20 +18,37 @@ class DetailBookingModel {
   });
 
   factory DetailBookingModel.fromJson(Map<String, dynamic> json) {
+    // Daha güvenli sayısal dönüşüm fonksiyonu
+    double safeParseDouble(dynamic value) {
+      if (value == null) return 0.0;
+      if (value is num) return value.toDouble();
+      if (value is String) {
+        try {
+          return double.parse(value);
+        } catch (e) {
+          print('Hata: String "$value" double\'a dönüştürülemedi: $e');
+          return 0.0;
+        }
+      }
+      print('Desteklenmeyen türde değer: $value (${value.runtimeType})');
+      return 0.0;
+    }
+
+    print(
+        "DetailBookingModel.fromJson çağrıldı - Raw tourPrice: ${json['tourPrice']}");
+
     return DetailBookingModel(
-      tourId: json['tourId'],
+      tourId: json['tourId'] ?? 0,
       tourName: json['tourName'] ?? 'Tur Adı Belirtilmemiş',
-      tourPrice: (json['tourPrice'] as num).toDouble(),
-      tourNightPrice: json['tourNightPrice'] != null
-          ? (json['tourNightPrice'] as num).toDouble()
-          : 0.0,
-      tourAirportPrice: json['tourAirportPrice'] != null
-          ? (json['tourAirportPrice'] as num).toDouble()
-          : 0.0,
+      tourPrice: safeParseDouble(json['tourPrice']),
+      tourNightPrice: safeParseDouble(json['tourNightPrice']),
+      tourAirportPrice: safeParseDouble(json['tourAirportPrice']),
       tourAbout: json['tourAbout'] ?? 'Açıklama Yok',
-      tourImages: (json['tourImages'] as List<dynamic>)
-          .map((image) => TourImage.fromJson(image))
-          .toList(),
+      tourImages: json['tourImages'] != null
+          ? (json['tourImages'] as List<dynamic>)
+              .map((image) => TourImage.fromJson(image))
+              .toList()
+          : [],
     );
   }
 

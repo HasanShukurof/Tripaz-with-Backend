@@ -112,10 +112,23 @@ class MainApiService {
 
     if (response.statusCode == 200) {
       print("Detail booking data for tourId ($tourId): ${response.data}");
-      final bookingModel = DetailBookingModel.fromJson(response.data[0]);
-      print(
-          "Detail booking data after model conversion: ${bookingModel.toJson()}");
-      return bookingModel;
+
+      if (response.data is List && response.data.isNotEmpty) {
+        final bookingModel = DetailBookingModel.fromJson(response.data[0]);
+        print(
+            "Detail booking data after model conversion: ${bookingModel.toJson()}");
+        return bookingModel;
+      } else if (response.data is Map) {
+        // API yanıtı doğrudan bir nesne ise
+        final bookingModel = DetailBookingModel.fromJson(response.data);
+        print(
+            "Detail booking data after model conversion: ${bookingModel.toJson()}");
+        return bookingModel;
+      } else {
+        print(
+            "API yanıtı beklenen formatta değil: ${response.data.runtimeType}");
+        throw Exception('API yanıtı uygun formatta değil');
+      }
     } else {
       print('API Error: ${response.statusCode} - ${response.statusMessage}');
       throw Exception('Failed to load detail booking');

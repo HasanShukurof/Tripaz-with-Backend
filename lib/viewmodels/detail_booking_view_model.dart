@@ -19,9 +19,23 @@ class DetailBookingViewModel extends ChangeNotifier {
   List<CarTypeModel> get carTypes => _carTypes;
   String? get selectedCarName => _selectedCarName;
 
-  double get tourPrice => _detailBooking?.tourPrice ?? 0.0;
-  double get tourNightPrice => _detailBooking?.tourNightPrice ?? 0.0;
-  double get tourAirportPrice => _detailBooking?.tourAirportPrice ?? 0.0;
+  double get tourPrice {
+    double price = _detailBooking?.tourPrice ?? 0.0;
+    print("DetailBookingViewModel.tourPrice getter çağrıldı: $price");
+    return price;
+  }
+
+  double get tourNightPrice {
+    double price = _detailBooking?.tourNightPrice ?? 0.0;
+    print("DetailBookingViewModel.tourNightPrice getter çağrıldı: $price");
+    return price;
+  }
+
+  double get tourAirportPrice {
+    double price = _detailBooking?.tourAirportPrice ?? 0.0;
+    print("DetailBookingViewModel.tourAirportPrice getter çağrıldı: $price");
+    return price;
+  }
 
   double get carPrice {
     if (_selectedCarName == null || _carTypes.isEmpty) {
@@ -30,7 +44,9 @@ class DetailBookingViewModel extends ChangeNotifier {
     final selectedCar = _carTypes.firstWhere(
         (element) => element.carName == _selectedCarName,
         orElse: () => CarTypeModel());
-    return selectedCar.carPrice ?? 0.0;
+    double price = selectedCar.carPrice ?? 0.0;
+    print("DetailBookingViewModel.carPrice getter çağrıldı: $price");
+    return price;
   }
 
   Future<void> fetchDetailBooking(int tourId) async {
@@ -42,7 +58,7 @@ class DetailBookingViewModel extends ChangeNotifier {
     try {
       _detailBooking = await _mainRepository.getDetailBooking(tourId);
       print(
-          "fetchDetailBooking: _detailBooking alındı. Değerler: ${_detailBooking?.toJson()}");
+          "fetchDetailBooking: _detailBooking alındı. Değerler: tourPrice=${_detailBooking?.tourPrice}, tourNightPrice=${_detailBooking?.tourNightPrice}, tourAirportPrice=${_detailBooking?.tourAirportPrice}");
     } catch (e) {
       _errorMessage = 'An error occurred while loading booking details: $e';
       print("fetchDetailBooking hata: $e");
