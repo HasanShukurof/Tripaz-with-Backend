@@ -11,7 +11,6 @@ import '../models/detail_booking_model.dart';
 import '../models/car_type_model.dart';
 import '../models/payment_request_model.dart';
 import '../models/payment_response_model.dart';
-import '../models/booking_request_model.dart';
 import '../models/booking_model.dart' hide TourModel;
 
 class MainRepository {
@@ -344,20 +343,6 @@ class MainRepository {
     } catch (e) {
       print('Payment status check error in repository: $e');
       throw Exception('Payment status check failed: $e');
-    }
-  }
-
-  Future<dynamic> createBooking(BookingRequestModel model) async {
-    try {
-      final response = await _mainApiService.createBooking(model);
-      print('Booking created successfully');
-
-      await _cacheService.clearCache(CacheService.KEY_BOOKINGS);
-
-      return response;
-    } catch (e) {
-      print('Booking creation error in repository: $e');
-      throw Exception('Booking creation failed: $e');
     }
   }
 

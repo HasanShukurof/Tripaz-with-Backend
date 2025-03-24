@@ -11,7 +11,6 @@ import '../models/detail_booking_model.dart';
 import '../models/car_type_model.dart'; // CarTypeModel import edildi
 import '../models/payment_request_model.dart';
 import '../models/payment_response_model.dart';
-import '../models/booking_request_model.dart'; // Yeni model import edildi
 import '../models/booking_model.dart'; // BookingModel import edildi
 
 class MainApiService {
@@ -372,42 +371,6 @@ class MainApiService {
       }
     } catch (e) {
       print('Check Payment Status Error in API: $e');
-      rethrow;
-    }
-  }
-
-  Future<dynamic> createBooking(BookingRequestModel model) async {
-    try {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      String? token = prefs.getString('access_token');
-
-      print('Creating booking with data: ${model.toJson()}');
-      print('Using token: $token');
-
-      final response = await _dio.post(
-        'https://tripaz.az/api/Tour/orders',
-        data: model.toJson(),
-        options: Options(
-          headers: {
-            'accept': 'text/plain',
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-          validateStatus: (status) => true,
-        ),
-      );
-
-      print('Booking API Response Status Code: ${response.statusCode}');
-      print('Booking API Response Data: ${response.data}');
-
-      if (response.statusCode == 200 || response.statusCode == 201) {
-        return response.data;
-      } else {
-        throw Exception(
-            'Booking creation failed with status ${response.statusCode}: ${response.data}');
-      }
-    } catch (e) {
-      print('Create Booking Error in API: $e');
       rethrow;
     }
   }

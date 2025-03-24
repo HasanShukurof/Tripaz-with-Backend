@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../models/booking_request_model.dart';
 import '../models/booking_model.dart';
 import '../repositories/main_repository.dart';
 
@@ -18,27 +17,6 @@ class BookingViewModel extends ChangeNotifier {
   dynamic get bookingResponse => _bookingResponse;
   List<BookingModel> get bookings => _bookings;
   BookingModel? get selectedBooking => _selectedBooking;
-
-  Future<dynamic> createBooking(BookingRequestModel request) async {
-    try {
-      _isLoading = true;
-      _error = null;
-      notifyListeners();
-
-      final response = await _repository.createBooking(request);
-      _bookingResponse = response;
-      print('Booking Response: $_bookingResponse');
-
-      return response;
-    } catch (e) {
-      _error = e.toString();
-      print('Booking Error in ViewModel: $e');
-      return null;
-    } finally {
-      _isLoading = false;
-      notifyListeners();
-    }
-  }
 
   // Get user bookings
   Future<void> fetchBookings() async {
