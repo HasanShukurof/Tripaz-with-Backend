@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import '../widgets/bottom_navigation_bar.dart';
+import 'confirm_booking_screen.dart';
 import 'home_screen.dart';
+import 'payment_style_screen.dart';
 
 class PaymentErrorScreen extends StatelessWidget {
   final String errorMessage;
@@ -39,16 +42,6 @@ class PaymentErrorScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              errorMessage.isNotEmpty
-                  ? errorMessage
-                  : "Payment was not completed, please try again",
-              textAlign: TextAlign.center,
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey.shade600,
-              ),
-            ),
             const SizedBox(height: 40),
             SizedBox(
               width: double.infinity,
@@ -63,7 +56,8 @@ class PaymentErrorScreen extends StatelessWidget {
                 onPressed: () {
                   Navigator.pushAndRemoveUntil(
                     context,
-                    MaterialPageRoute(builder: (context) => const HomeScreen()),
+                    MaterialPageRoute(
+                        builder: (context) => const BottomNavBar()),
                     (route) => false,
                   );
                 },
@@ -78,17 +72,6 @@ class PaymentErrorScreen extends StatelessWidget {
               ),
             ),
             const SizedBox(height: 16),
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text(
-                'Try Again',
-                style: TextStyle(
-                  color: Colors.blue.shade700,
-                  fontSize: 16,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ),
           ],
         ),
       ),

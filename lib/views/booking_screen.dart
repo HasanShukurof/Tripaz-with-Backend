@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../viewmodels/booking_view_model.dart';
+import '../widgets/bottom_navigation_bar.dart';
 import 'booking_detail_screen.dart';
 import 'dart:convert';
+import 'profile_screen.dart';
 
 class BookingScreen extends StatefulWidget {
   const BookingScreen({super.key});
@@ -38,7 +40,18 @@ class _BookingScreenState extends State<BookingScreen> {
         ),
         leading: IconButton(
           icon: const Icon(Icons.arrow_back, color: Colors.black),
-          onPressed: () => Navigator.pop(context),
+          onPressed: () {
+            if (Navigator.canPop(context)) {
+              Navigator.pop(context);
+            } else {
+              // Tüm sayfaları temizle ve ana sayfaya dön
+              Navigator.pushAndRemoveUntil(
+                context,
+                MaterialPageRoute(builder: (context) => const BottomNavBar()),
+                (route) => false,
+              );
+            }
+          },
         ),
         actions: [
           IconButton(
