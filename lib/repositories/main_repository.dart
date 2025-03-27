@@ -31,7 +31,8 @@ class MainRepository {
     String? token = prefs.getString('access_token');
 
     if (token == null || token.isEmpty) {
-      throw Exception('Token not found. User may not be logged in.');
+      // Token yoksa login olmamış kullanıcılar için public API kullan
+      return await getPublicTours();
     }
 
     List<TourModel>? cachedTours = await _cacheService.getDataList<TourModel>(
@@ -53,6 +54,34 @@ class MainRepository {
     }
 
     return tours;
+  }
+
+  Future<List<TourModel>> getPublicTours() async {
+    List<TourModel>? cachedTours = await _cacheService.getDataList<TourModel>(
+      CacheService.KEY_PUBLIC_TOURS,
+      (json) => TourModel.fromJson(json),
+    );
+
+    if (cachedTours != null) {
+      print('Public turlar önbellekten alındı');
+      return cachedTours;
+    }
+
+    try {
+      final tours = await _mainApiService.fetchPublicTours();
+
+      if (tours.isNotEmpty) {
+        final toursJson = tours.map((tourItem) => tourItem.toJson()).toList();
+        await _cacheService.saveData(CacheService.KEY_PUBLIC_TOURS, toursJson);
+        print('Public turlar API\'den alındı ve önbelleğe kaydedildi');
+      }
+
+      return tours;
+    } catch (e) {
+      print('Public tours error: $e');
+      // Hata durumunda boş liste döndür
+      return [];
+    }
   }
 
   Future<TourModel> getTour(int tourId) async {
@@ -146,7 +175,8 @@ class MainRepository {
     String? token = prefs.getString('access_token');
 
     if (token == null || token.isEmpty) {
-      throw Exception('Token not found. User may not be logged in.');
+      // Token yoksa login olmamış kullanıcılar için public API kullan
+      return await getPublicTourDetails(tourId);
     }
 
     DetailTourModel? cachedTourDetails =
@@ -168,6 +198,34 @@ class MainRepository {
     print('Tur detayları API\'den alındı ve önbelleğe kaydedildi: $tourId');
 
     return tourDetails;
+  }
+
+  Future<DetailTourModel> getPublicTourDetails(int tourId) async {
+    DetailTourModel? cachedTourDetails =
+        await _cacheService.getData<DetailTourModel>(
+      CacheService.KEY_PUBLIC_TOUR_DETAILS + tourId.toString(),
+      (json) => DetailTourModel.fromJson(json),
+    );
+
+    if (cachedTourDetails != null) {
+      print('Public tur detayları önbellekten alındı: $tourId');
+      return cachedTourDetails;
+    }
+
+    try {
+      final tourDetails = await _mainApiService.fetchPublicTourDetails(tourId);
+
+      await _cacheService.saveData(
+          CacheService.KEY_PUBLIC_TOUR_DETAILS + tourId.toString(),
+          tourDetails.toJson());
+      print(
+          'Public tur detayları API\'den alındı ve önbelleğe kaydedildi: $tourId');
+
+      return tourDetails;
+    } catch (e) {
+      print('Public tour details error: $e');
+      throw e;
+    }
   }
 
   Future<UserModel> getUser() async {
@@ -357,50 +415,6 @@ class MainRepository {
     await _mainApiService.deleteUser(token);
 
     await _cacheService.clearAllCache();
-  }
-
-  Future<List<TourModel>> getPublicTours() async {
-    List<TourModel>? cachedTours = await _cacheService.getDataList<TourModel>(
-      'cached_public_tours',
-      (json) => TourModel.fromJson(json),
-    );
-
-    if (cachedTours != null) {
-      print('Genel turlar önbellekten alındı');
-      return cachedTours;
-    }
-
-    final tours = await _mainApiService.fetchPublicTours();
-
-    if (tours.isNotEmpty) {
-      final toursJson = tours.map((tour) => tour.toJson()).toList();
-      await _cacheService.saveData('cached_public_tours', toursJson);
-      print('Genel turlar API\'den alındı ve önbelleğe kaydedildi');
-    }
-
-    return tours;
-  }
-
-  Future<DetailTourModel> getPublicTourDetails(int tourId) async {
-    DetailTourModel? cachedTourDetails =
-        await _cacheService.getData<DetailTourModel>(
-      'cached_public_tour_details_$tourId',
-      (json) => DetailTourModel.fromJson(json),
-    );
-
-    if (cachedTourDetails != null) {
-      print('Genel tur detayları önbellekten alındı: $tourId');
-      return cachedTourDetails;
-    }
-
-    final tourDetails = await _mainApiService.fetchPublicTourDetails(tourId);
-
-    await _cacheService.saveData(
-        'cached_public_tour_details_$tourId', tourDetails.toJson());
-    print(
-        'Genel tur detayları API\'den alındı ve önbelleğe kaydedildi: $tourId');
-
-    return tourDetails;
   }
 
   Future<List<BookingModel>> getBookings() async {

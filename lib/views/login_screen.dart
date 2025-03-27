@@ -1,9 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import '../services/auth_service.dart';
 import '../viewmodels/login_viewmodel.dart';
 import '../widgets/bottom_navigation_bar.dart';
 import 'register_screen.dart';
 import '../viewmodels/home_view_model.dart';
+import 'empty_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:io';
+import 'package:path_provider/path_provider.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -16,6 +24,7 @@ class _LogInScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   bool _isPasswordVisible = false;
+  final AuthService _authService = AuthService();
 
   void _showErrorDialog(String message) {
     if (!mounted) return;
@@ -86,6 +95,28 @@ class _LogInScreenState extends State<LoginScreen> {
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(builder: (context) => const BottomNavBar()),
+    );
+  }
+
+  void _showLoadingDialog() {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return const Dialog(
+          child: Padding(
+            padding: EdgeInsets.all(20.0),
+            child: Row(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                CircularProgressIndicator(),
+                SizedBox(width: 20),
+                Text("Yükleniyor..."),
+              ],
+            ),
+          ),
+        );
+      },
     );
   }
 
@@ -220,6 +251,116 @@ class _LogInScreenState extends State<LoginScreen> {
                               child: const Text(
                                 "Don't have an account? Register",
                                 style: TextStyle(color: Colors.black),
+                              ),
+                            ),
+                            ElevatedButton(
+                              onPressed: () async {
+                                try {
+                                  // Yükleme göstergesini göster
+                                  _showLoadingDialog();
+
+                                  // Google ID Token al
+                                  final googleIdToken =
+                                      await _authService.getGoogleIdToken();
+
+                                  if (googleIdToken != null) {
+                                    print('Google ID Token alındı');
+                                    try {
+                                      // AuthService kullanarak giriş yap
+                                      final userLoginModel = await _authService
+                                          .signInWithGoogleApi(googleIdToken,
+                                              isIOS: Platform.isIOS);
+
+                                      // Yükleme göstergesini kapat
+                                      if (mounted) {
+                                        Navigator.of(context).pop();
+                                      }
+
+                                      print('API Başarılı: Token alındı');
+
+                                      // Token'ı SharedPreferences'a kaydet
+                                      final prefs =
+                                          await SharedPreferences.getInstance();
+                                      await prefs.setString('access_token',
+                                          userLoginModel.accessToken);
+                                      await prefs.setString('refresh_token',
+                                          userLoginModel.refreshToken);
+
+                                      // Kullanıcı artık oturum açtı olarak işaretle
+                                      await prefs.setBool('is_logged_in', true);
+
+                                      // Ana sayfaya yönlendir
+                                      Navigator.pushReplacement(
+                                        context,
+                                        MaterialPageRoute(
+                                          builder: (context) =>
+                                              const BottomNavBar(),
+                                        ),
+                                      );
+                                    } catch (apiError) {
+                                      // Dialog'ları kapat (açık kalmışsa)
+                                      if (mounted &&
+                                          Navigator.of(context).canPop()) {
+                                        Navigator.of(context).pop();
+                                      }
+
+                                      print('API İstek Hatası: $apiError');
+                                      _showErrorDialog(
+                                          'Sunucuya bağlanırken hata oluştu. İnternet bağlantınızı kontrol edin ve tekrar deneyin.');
+                                    }
+                                  } else {
+                                    print('Google ID Token alınamadı');
+                                    _showErrorDialog(
+                                        'Google ile giriş yapılamadı. Lütfen tekrar deneyin veya başka bir giriş yöntemi kullanın.');
+                                  }
+                                } catch (e) {
+                                  // Dialog'ları kapat (açık kalmışsa)
+                                  if (mounted &&
+                                      Navigator.of(context).canPop()) {
+                                    Navigator.of(context).pop();
+                                  }
+
+                                  if (mounted) {
+                                    print('Google Sign In Hatası: $e');
+                                    String errorMessage = e.toString();
+
+                                    // Kullanıcı dostu hata mesajları
+                                    if (errorMessage.contains('10:')) {
+                                      errorMessage =
+                                          'Google hizmetleriyle bağlantı sağlanamadı. Lütfen daha sonra tekrar deneyin.';
+                                    } else if (errorMessage
+                                        .contains('canceled')) {
+                                      errorMessage =
+                                          'Google ile giriş iptal edildi.';
+                                    } else if (errorMessage
+                                        .contains('network')) {
+                                      errorMessage =
+                                          'İnternet bağlantısı hatası. Lütfen bağlantınızı kontrol edin.';
+                                    } else if (errorMessage
+                                        .contains('Exception:')) {
+                                      errorMessage = errorMessage
+                                          .replaceAll('Exception:', '')
+                                          .trim();
+                                    }
+
+                                    _showErrorDialog(errorMessage);
+                                  }
+                                }
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.white,
+                                foregroundColor: Colors.black,
+                                side: const BorderSide(color: Colors.grey),
+                                padding:
+                                    const EdgeInsets.symmetric(vertical: 12),
+                              ),
+                              child: const Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.login),
+                                  SizedBox(width: 8),
+                                  Text("Google ile Giriş Yap"),
+                                ],
                               ),
                             ),
                           ],

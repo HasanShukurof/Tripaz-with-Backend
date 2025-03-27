@@ -1,7 +1,9 @@
+import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:tripaz_app/viewmodels/detail_tour_view_model.dart';
 import 'package:tripaz_app/viewmodels/home_view_model.dart';
+import 'firebase_options.dart';
 import 'repositories/main_repository.dart';
 import 'services/main_api_service.dart';
 import 'services/cache_service.dart';
@@ -15,8 +17,12 @@ import 'views/onboarding_screen.dart';
 import 'widgets/bottom_navigation_bar.dart';
 import 'viewmodels/payment_view_model.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Flutter binding'i başlat
+
+  await Firebase.initializeApp(
+    options: DefaultFirebaseOptions.currentPlatform,
+  );
 
   // Uygulamayı başlatırken önbelleği temizle
   final cacheService = CacheService();

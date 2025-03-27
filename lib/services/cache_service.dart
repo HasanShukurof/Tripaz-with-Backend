@@ -7,6 +7,8 @@ class CacheService {
   static const String KEY_WISHLIST = 'cached_wishlist';
   static const String KEY_BOOKINGS = 'cached_bookings';
   static const String KEY_USER_DATA = 'cached_user_data';
+  static const String KEY_PUBLIC_TOURS = 'cached_public_tours';
+  static const String KEY_PUBLIC_TOUR_DETAILS = 'cached_public_tour_details_';
   static const Duration DEFAULT_CACHE_DURATION = Duration(hours: 1);
 
   // Önbellek süresini kontrol etmek için zaman damgaları

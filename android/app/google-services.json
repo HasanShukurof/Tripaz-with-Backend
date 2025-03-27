@@ -12,7 +12,20 @@
           "package_name": "com.hasanshukurov.llctripaz.tripaz_app"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "76238259895-h9rtuu8v66por709bkipookio6sds4eg.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hasanshukurov.llctripaz.tripaz_app",
+            "certificate_hash": "C2:2A:BD:E2:4C:32:73:C5:7F:27:E5:2F:FB:E5:00:0B:8F:5B:13:38"
+          }
+        },
+        {
+          "client_id": "22621409630-dd475rc31b05i1pvsudq8uje8bvugdes.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyB4_ATIXhgkmQQtMmlEJbkU5ZSxRVvmG6w"
@@ -20,7 +33,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "22621409630-dd475rc31b05i1pvsudq8uje8bvugdes.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "22621409630-171fudqtoqigmtc1r6jcl3ppfc4ogsti.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.hasanshukurov.llctripaz.tripazApp"
+              }
+            }
+          ]
         }
       }
     }
