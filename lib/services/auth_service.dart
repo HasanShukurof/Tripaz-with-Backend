@@ -3,14 +3,36 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import '../models/user_login_model.dart';
+import 'dart:io' show Platform;
 
 class AuthService {
-  // Sadece Google Sign-In kullan
-  final GoogleSignIn _googleSignIn = GoogleSignIn(
-    scopes: ['email', 'profile', 'openid'],
-    serverClientId:
-        '22621409630-dd475rc31b05i1pvsudq8uje8bvugdes.apps.googleusercontent.com', // Firebase web client ID
-  );
+  // Platform bazlı Google Sign-In yapılandırması
+  late final GoogleSignIn _googleSignIn;
+
+  AuthService() {
+    // Platform bazlı Google Sign-In yapılandırması
+    if (Platform.isAndroid) {
+      _googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile', 'openid'],
+        serverClientId:
+            '76238259895-7jl3cj3c3ft0rahhb1vgpr3oom59qier.apps.googleusercontent.com',
+      );
+    } else if (Platform.isIOS) {
+      _googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile', 'openid'],
+        // iOS için web client ID
+        serverClientId:
+            '22621409630-dd475rc31b05i1pvsudq8uje8bvugdes.apps.googleusercontent.com',
+      );
+    } else {
+      _googleSignIn = GoogleSignIn(
+        scopes: ['email', 'profile', 'openid'],
+        serverClientId:
+            '6238259895-7jl3cj3c3ft0rahhb1vgpr3oom59qier.apps.googleusercontent.com',
+      );
+    }
+  }
+
   final FirebaseAuth _auth = FirebaseAuth.instance;
 
   // Google Sign In ve ID Token alma
@@ -95,6 +117,8 @@ class AuthService {
   Future<String?> getGoogleIdToken() async {
     try {
       print('Google ile giriş yapılıyor...');
+      print(
+          'Platform: ${Platform.isAndroid ? "Android" : Platform.isIOS ? "iOS" : "Diğer"}');
 
       // Mevcut oturumları kapat (opsiyonel, Google'ın her seferinde hesap seçimi göstermesi için)
       await _googleSignIn.signOut();
@@ -117,6 +141,14 @@ class AuthService {
       final String? idToken = googleAuth.idToken;
       print('Google ID Token: ${idToken != null ? "Alındı" : "Alınamadı"}');
 
+      if (idToken == null) {
+        print('ID Token alınamadı! Auth nesnesi: $googleAuth');
+        if (Platform.isAndroid) {
+          print(
+              'Android için ek hata ayıklama bilgileri: AccessToken: ${googleAuth.accessToken}');
+        }
+      }
+
       return idToken;
     } catch (e) {
       print('Google Sign In hatası: $e');
@@ -129,6 +161,9 @@ class AuthService {
         throw Exception('İnternet bağlantınızı kontrol edin.');
       } else if (e.toString().contains('canceled')) {
         throw Exception('Google ile giriş iptal edildi.');
+      } else if (Platform.isAndroid && e.toString().contains('12501')) {
+        throw Exception(
+            'Google Play Hizmetleri hatası. Lütfen Google hesabınızı telefonunuza ekleyin veya güncelleyin.');
       }
 
       rethrow;

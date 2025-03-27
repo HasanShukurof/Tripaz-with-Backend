@@ -1,5 +1,5 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.hasanshukurov.tripaz_app"> <!-- Kendi Paket Isminizi buraya girin (Orn: com.example.tripaz_app)-->
+    package="com.hasanshukurov.llctripaz.tripaz_app"> <!-- Kendi Paket Isminizi buraya girin (Orn: com.example.tripaz_app)-->
     
      <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
@@ -8,7 +8,10 @@
         android:label="TripAz"
         android:name="${applicationName}"
         android:icon="@mipmap/launcher_icon"
-        android:usesCleartextTraffic="true"> <!--usesCleartextTraffic=true ekledim, internet adresleri http olabildigi icin-->
+        android:usesCleartextTraffic="true"> 
+        <meta-data
+            android:name="com.google.android.gms.version"
+            android:value="@integer/google_play_services_version" />
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -25,6 +28,15 @@
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+            <!-- Google Sign In için intent-filter -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data
+                    android:scheme="com.hasanshukurov.llctripaz.tripaz_app"
+                    android:host="login-callback" />
             </intent-filter>
         </activity>
          <meta-data
