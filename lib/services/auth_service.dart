@@ -15,7 +15,7 @@ class AuthService {
       _googleSignIn = GoogleSignIn(
         scopes: ['email', 'profile', 'openid'],
         serverClientId:
-            '76238259895-7jl3cj3c3ft0rahhb1vgpr3oom59qier.apps.googleusercontent.com',
+            '76238259895-8hlu73vmvkvooqc33r25d4ohsd434e19.apps.googleusercontent.com',
       );
     } else if (Platform.isIOS) {
       _googleSignIn = GoogleSignIn(
@@ -28,7 +28,7 @@ class AuthService {
       _googleSignIn = GoogleSignIn(
         scopes: ['email', 'profile', 'openid'],
         serverClientId:
-            '6238259895-7jl3cj3c3ft0rahhb1vgpr3oom59qier.apps.googleusercontent.com',
+            '76238259895-8hlu73vmvkvooqc33r25d4ohsd434e19.apps.googleusercontent.com',
       );
     }
   }
