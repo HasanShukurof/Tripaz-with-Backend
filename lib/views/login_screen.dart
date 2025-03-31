@@ -265,15 +265,25 @@ class _LogInScreenState extends State<LoginScreen> {
 
                                   if (googleIdToken != null) {
                                     print('Google ID Token alındı');
+
+                                    // JWT token'ın tam içeriğini yazdır
+                                    print('----- JWT TOKEN TAM İÇERİK -----');
+                                    print(googleIdToken);
+                                    print('--------------------------------');
+
                                     try {
                                       // AuthService kullanarak giriş yap
                                       final userLoginModel = await _authService
-                                          .signInWithGoogleApi(googleIdToken,
-                                              isIOS: Platform.isIOS);
+                                          .signInWithGoogleApi();
 
                                       // Yükleme göstergesini kapat
                                       if (mounted) {
                                         Navigator.of(context).pop();
+                                      }
+
+                                      if (userLoginModel == null) {
+                                        throw Exception(
+                                            'Oturum açma başarısız oldu.');
                                       }
 
                                       print('API Başarılı: Token alındı');

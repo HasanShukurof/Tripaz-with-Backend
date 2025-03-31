@@ -14,11 +14,19 @@
       },
       "oauth_client": [
         {
-          "client_id": "76238259895-h9rtuu8v66por709bkipookio6sds4eg.apps.googleusercontent.com",
+          "client_id": "22621409630-5dc52pf8ihfmacn4hjk2a8dg3cjs5bd3.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
             "package_name": "com.hasanshukurov.llctripaz.tripaz_app",
-            "certificate_hash": "C2:2A:BD:E2:4C:32:73:C5:7F:27:E5:2F:FB:E5:00:0B:8F:5B:13:38"
+            "certificate_hash": "665d9ebf16e3b4531b87be29a3aacf8482bc23d7"
+          }
+        },
+        {
+          "client_id": "22621409630-7df5233e4838lg97fg388hughn8u4ikb.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.hasanshukurov.llctripaz.tripaz_app",
+            "certificate_hash": "c22abde24c3273c57f27e52ffbe50d0b8f5b1338"
           }
         },
         {
