@@ -6,6 +6,9 @@ import '../models/user_login_model.dart';
 import 'dart:io' show Platform, File;
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as path;
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
+import 'package:crypto/crypto.dart';
+import 'dart:math';
 
 class AuthService {
   // Platform bazlı Google Sign-In yapılandırması
@@ -26,6 +29,9 @@ class AuthService {
         // iOS için web client ID
         serverClientId:
             '22621409630-dd475rc31b05i1pvsudq8uje8bvugdes.apps.googleusercontent.com',
+        // Tek adımda onay için ek parametreler
+        signInOption: SignInOption.standard,
+        forceCodeForRefreshToken: false,
       );
     } else {
       _googleSignIn = GoogleSignIn(
@@ -147,8 +153,8 @@ class AuthService {
     }
   }
 
-  // Doğrudan Google hesap listesi gösterip ID Token alan metod
-  Future<String?> getGoogleIdToken() async {
+  // Google ile API üzerinden giriş yap - Tek adımda işlem tamamlama
+  Future<UserLoginModel?> signInWithGoogleApi() async {
     try {
       print('Google ile giriş yapılıyor...');
       print(
@@ -157,7 +163,7 @@ class AuthService {
       // Mevcut oturumları kapat
       await _googleSignIn.signOut();
 
-      // Platform fark etmeksizin aynı akışı kullan
+      // Doğrudan Google hesap seçimine git
       final GoogleSignInAccount? googleAccount = await _googleSignIn.signIn();
 
       if (googleAccount == null) {
@@ -171,88 +177,34 @@ class AuthService {
       final GoogleSignInAuthentication googleAuth =
           await googleAccount.authentication;
 
-      // ID Token'ı döndür
+      // ID Token'ı kontrol et
       final String? idToken = googleAuth.idToken;
       print('Google ID Token: ${idToken != null ? "Alındı" : "Alınamadı"}');
-
-      if (idToken == null) {
-        print('ID Token alınamadı! Auth nesnesi: $googleAuth');
-        if (Platform.isAndroid) {
-          print(
-              'Android için ek hata ayıklama bilgileri: AccessToken: ${googleAuth.accessToken}');
-        }
-      } else {
-        // Platform bazlı ID Token'ı kaydet
-        try {
-          if (Platform.isIOS) {
-            // iOS için MacBook masaüstüne kaydet
-            final file =
-                File('/Users/hasanshukurov/Desktop/google_id_token.txt');
-            await file.writeAsString(idToken);
-            print(
-                'ID Token başarıyla MacBook masaüstüne kaydedildi: ${file.path}');
-          } else {
-            // Android için
-            final directory = await getApplicationDocumentsDirectory();
-            final file = File('${directory.path}/google_id_token.txt');
-            await file.writeAsString(idToken);
-            print('ID Token başarıyla kaydedildi: ${file.path}');
-
-            print('----- JWT TOKEN TAM İÇERİK -----');
-            print(idToken);
-            print('--------------------------------');
-          }
-        } catch (e) {
-          print('ID Token kaydedilirken hata oluştu: $e');
-
-          // Hata durumunda Documents klasörüne kaydetmeyi dene
-          try {
-            final directory = await getApplicationDocumentsDirectory();
-            final file = File('${directory.path}/google_id_token.txt');
-            await file.writeAsString(idToken);
-            print(
-                'ID Token başarıyla Documents klasörüne kaydedildi: ${file.path}');
-          } catch (e) {
-            print('Documents klasörüne de kaydedilemedi: $e');
-          }
-        }
-      }
-
-      return idToken;
-    } catch (e) {
-      print('Google Sign In hatası: $e');
-
-      // Hata mesajını daha anlaşılır hale getir
-      if (e.toString().contains('10:')) {
-        throw Exception(
-            'Google hizmetleriyle bağlantı kurulamadı. Lütfen daha sonra tekrar deneyin.');
-      } else if (e.toString().contains('network')) {
-        throw Exception('İnternet bağlantınızı kontrol edin.');
-      } else if (e.toString().contains('canceled')) {
-        throw Exception('Google ile giriş iptal edildi.');
-      } else if (Platform.isAndroid && e.toString().contains('12501')) {
-        throw Exception(
-            'Google Play Hizmetleri hatası. Lütfen Google hesabınızı telefonunuza ekleyin veya güncelleyin.');
-      }
-
-      rethrow;
-    }
-  }
-
-  // Google ile API üzerinden giriş yap
-  Future<UserLoginModel?> signInWithGoogleApi() async {
-    try {
-      final String? idToken = await getGoogleIdToken();
 
       if (idToken == null) {
         throw Exception('Google ID Token alınamadı!');
       }
 
-      // Hem iOS hem de Android için aynı endpoint'i kullan
+      // ID Token'ı kaydet
+      try {
+        if (Platform.isIOS) {
+          final file = File('/Users/hasanshukurov/Desktop/google_id_token.txt');
+          await file.writeAsString(idToken);
+          print(
+              'ID Token başarıyla MacBook masaüstüne kaydedildi: ${file.path}');
+
+          print('----- JWT TOKEN TAM İÇERİK -----');
+          print(idToken);
+          print('--------------------------------');
+        }
+      } catch (e) {
+        print('ID Token kaydedilirken hata oluştu: $e');
+      }
+
+      // Doğrudan API'ye istek gönder
       const String endpoint =
           "https://tripaz.az/api/Authentication/external-login-ios";
 
-      // API isteği gönder
       final response = await http.post(
         Uri.parse(endpoint),
         headers: {
@@ -281,6 +233,21 @@ class AuthService {
     }
   }
 
+  // Get Google ID Token - Geçici olarak tutuyoruz eski kodu, ihtiyaç olursa diye
+  Future<String?> getGoogleIdToken() async {
+    // Doğrudan yeni metodumuza yönlendir
+    try {
+      final userModel = await signInWithGoogleApi();
+      if (userModel != null) {
+        return "success";
+      }
+      return null;
+    } catch (e) {
+      print("Google giriş hata: $e");
+      rethrow;
+    }
+  }
+
   UserLoginModel _saveTokens(Map<String, dynamic> data) {
     // Token mesajını kontrol et
     if (data['message'] == 'Token valid' && data['token'] != null) {
@@ -291,6 +258,159 @@ class AuthService {
       );
     } else {
       throw Exception('Backend token yanıtı geçersiz: ${data['message']}');
+    }
+  }
+
+  // Apple Sign In için nonce oluşturucu metod
+  String _generateNonce([int length = 32]) {
+    const charset =
+        '0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._';
+    final random = Random.secure();
+    return List.generate(length, (_) => charset[random.nextInt(charset.length)])
+        .join();
+  }
+
+  // Nonce'u SHA-256 ile hashleme metodu
+  String _sha256ofString(String input) {
+    final bytes = utf8.encode(input);
+    final digest = sha256.convert(bytes);
+    return digest.toString();
+  }
+
+  // Firebase ile Apple Sign In
+  Future<UserCredential> signInWithApple() async {
+    try {
+      // Güvenli nonce oluştur
+      final rawNonce = _generateNonce();
+      final nonce = _sha256ofString(rawNonce);
+
+      // Apple'dan kimlik doğrulama bilgilerini al
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: nonce,
+      );
+
+      // OAuthCredential oluştur
+      final oauthCredential = OAuthProvider('apple.com').credential(
+        idToken: appleCredential.identityToken,
+        rawNonce: rawNonce,
+      );
+
+      // Firebase ile giriş yap
+      return await _auth.signInWithCredential(oauthCredential);
+    } catch (e) {
+      print('Apple Sign In hatası: $e');
+      throw Exception('Apple Sign In başarısız: $e');
+    }
+  }
+
+  // Apple ID Token alma
+  Future<String?> getAppleIdToken() async {
+    try {
+      print('Apple ile giriş yapılıyor...');
+      print('Platform: ${Platform.isIOS ? "iOS" : "Diğer"}');
+
+      // Apple'dan kimlik doğrulama bilgilerini al
+      final rawNonce = _generateNonce();
+      final nonce = _sha256ofString(rawNonce);
+
+      final appleCredential = await SignInWithApple.getAppleIDCredential(
+        scopes: [
+          AppleIDAuthorizationScopes.email,
+          AppleIDAuthorizationScopes.fullName,
+        ],
+        nonce: nonce,
+      );
+
+      final String? idToken = appleCredential.identityToken;
+      print('Apple ID Token: ${idToken != null ? "Alındı" : "Alınamadı"}');
+      // Tam token değerini güvenli bir şekilde log'a ekleyin
+      print('TAM_APPLE_ID_TOKEN: ${idToken ?? "Token alınamadı"}');
+
+      if (idToken != null) {
+        // Kullanıcı bilgilerini logla
+        print('Apple User Email: ${appleCredential.email ?? "Belirtilmemiş"}');
+        print(
+            'Apple User Name: ${appleCredential.givenName ?? ""} ${appleCredential.familyName ?? ""}');
+
+        // ID Token'ı kaydet
+        try {
+          if (Platform.isIOS) {
+            // iOS için MacBook masaüstüne kaydet
+            final file =
+                File('/Users/hasanshukurov/Desktop/apple_id_token.txt');
+            await file.writeAsString(idToken);
+            print(
+                'ID Token başarıyla MacBook masaüstüne kaydedildi: ${file.path}');
+          } else {
+            // Android için
+            final directory = await getApplicationDocumentsDirectory();
+            final file = File('${directory.path}/apple_id_token.txt');
+            await file.writeAsString(idToken);
+            print('ID Token başarıyla kaydedildi: ${file.path}');
+          }
+        } catch (e) {
+          print('ID Token kaydedilirken hata oluştu: $e');
+        }
+      }
+
+      return idToken;
+    } catch (e) {
+      print('Apple Sign In hatası: $e');
+
+      // Hata mesajını daha anlaşılır hale getir
+      if (e.toString().contains('canceled')) {
+        throw Exception('Apple ile giriş iptal edildi.');
+      } else if (e.toString().contains('network')) {
+        throw Exception('İnternet bağlantınızı kontrol edin.');
+      }
+
+      rethrow;
+    }
+  }
+
+  // Apple ile API üzerinden giriş yap
+  Future<UserLoginModel?> signInWithAppleApi() async {
+    try {
+      final String? idToken = await getAppleIdToken();
+
+      if (idToken == null) {
+        throw Exception('Apple ID Token alınamadı!');
+      }
+
+      // API endpoint'i
+      const String endpoint =
+          "https://tripaz.az/api/Authentication/external-login-apple";
+
+      // API isteği gönder
+      final response = await http.post(
+        Uri.parse(endpoint),
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: jsonEncode({
+          'provider': 'apple',
+          'idToken': idToken,
+        }),
+      );
+
+      print('API Yanıt Durum Kodu: ${response.statusCode}');
+      print('API Yanıt İçeriği: ${response.body}');
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final userModel = _saveTokens(data);
+        return userModel;
+      } else {
+        throw Exception(
+            'API hatası: ${response.statusCode}, Cevap: ${response.body}');
+      }
+    } catch (e) {
+      print('Apple API ile giriş hatası: $e');
+      return null;
     }
   }
 }

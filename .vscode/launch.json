@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "tripaz_app",
+            "request": "launch",
+            "type": "dart",
+            "args": [
+                "--verbose"
+            ],
+            "console": "debugConsole"
+        }
+    ]
+}

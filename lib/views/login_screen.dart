@@ -259,70 +259,41 @@ class _LogInScreenState extends State<LoginScreen> {
                                   // Yükleme göstergesini göster
                                   _showLoadingDialog();
 
-                                  // Google ID Token al
-                                  final googleIdToken =
-                                      await _authService.getGoogleIdToken();
+                                  // Doğrudan Google API ile giriş yap (tek adımda)
+                                  final userLoginModel =
+                                      await _authService.signInWithGoogleApi();
 
-                                  if (googleIdToken != null) {
-                                    print('Google ID Token alındı');
-
-                                    // JWT token'ın tam içeriğini yazdır
-                                    print('----- JWT TOKEN TAM İÇERİK -----');
-                                    print(googleIdToken);
-                                    print('--------------------------------');
-
-                                    try {
-                                      // AuthService kullanarak giriş yap
-                                      final userLoginModel = await _authService
-                                          .signInWithGoogleApi();
-
-                                      // Yükleme göstergesini kapat
-                                      if (mounted) {
-                                        Navigator.of(context).pop();
-                                      }
-
-                                      if (userLoginModel == null) {
-                                        throw Exception(
-                                            'Oturum açma başarısız oldu.');
-                                      }
-
-                                      print('API Başarılı: Token alındı');
-
-                                      // Token'ı SharedPreferences'a kaydet
-                                      final prefs =
-                                          await SharedPreferences.getInstance();
-                                      await prefs.setString('access_token',
-                                          userLoginModel.accessToken);
-                                      await prefs.setString('refresh_token',
-                                          userLoginModel.refreshToken);
-
-                                      // Kullanıcı artık oturum açtı olarak işaretle
-                                      await prefs.setBool('is_logged_in', true);
-
-                                      // Ana sayfaya yönlendir
-                                      Navigator.pushReplacement(
-                                        context,
-                                        MaterialPageRoute(
-                                          builder: (context) =>
-                                              const BottomNavBar(),
-                                        ),
-                                      );
-                                    } catch (apiError) {
-                                      // Dialog'ları kapat (açık kalmışsa)
-                                      if (mounted &&
-                                          Navigator.of(context).canPop()) {
-                                        Navigator.of(context).pop();
-                                      }
-
-                                      print('API İstek Hatası: $apiError');
-                                      _showErrorDialog(
-                                          'Sunucuya bağlanırken hata oluştu. İnternet bağlantınızı kontrol edin ve tekrar deneyin.');
-                                    }
-                                  } else {
-                                    print('Google ID Token alınamadı');
-                                    _showErrorDialog(
-                                        'Google ile giriş yapılamadı. Lütfen tekrar deneyin veya başka bir giriş yöntemi kullanın.');
+                                  // Yükleme göstergesini kapat
+                                  if (mounted) {
+                                    Navigator.of(context).pop();
                                   }
+
+                                  if (userLoginModel == null) {
+                                    throw Exception(
+                                        'Oturum açma başarısız oldu.');
+                                  }
+
+                                  print('API Başarılı: Token alındı');
+
+                                  // Token'ı SharedPreferences'a kaydet
+                                  final prefs =
+                                      await SharedPreferences.getInstance();
+                                  await prefs.setString('access_token',
+                                      userLoginModel.accessToken);
+                                  await prefs.setString('refresh_token',
+                                      userLoginModel.refreshToken);
+
+                                  // Kullanıcı artık oturum açtı olarak işaretle
+                                  await prefs.setBool('is_logged_in', true);
+
+                                  // Ana sayfaya yönlendir
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const BottomNavBar(),
+                                    ),
+                                  );
                                 } catch (e) {
                                   // Dialog'ları kapat (açık kalmışsa)
                                   if (mounted &&
@@ -373,6 +344,95 @@ class _LogInScreenState extends State<LoginScreen> {
                                 ],
                               ),
                             ),
+                            const SizedBox(height: 20),
+                            if (Platform.isIOS)
+                              ElevatedButton(
+                                onPressed: () async {
+                                  try {
+                                    // Yükleme göstergesini göster
+                                    _showLoadingDialog();
+
+                                    // Apple ile giriş yap ve token al
+                                    final userLoginModel =
+                                        await _authService.signInWithAppleApi();
+
+                                    // Yükleme göstergesini kapat
+                                    if (mounted) {
+                                      Navigator.of(context).pop();
+                                    }
+
+                                    if (userLoginModel == null) {
+                                      throw Exception(
+                                          'Oturum açma başarısız oldu.');
+                                    }
+
+                                    print('API Başarılı: Apple Token alındı');
+
+                                    // Token'ı SharedPreferences'a kaydet
+                                    final prefs =
+                                        await SharedPreferences.getInstance();
+                                    await prefs.setString('access_token',
+                                        userLoginModel.accessToken);
+                                    await prefs.setString('refresh_token',
+                                        userLoginModel.refreshToken);
+
+                                    // Kullanıcı artık oturum açtı olarak işaretle
+                                    await prefs.setBool('is_logged_in', true);
+
+                                    // Ana sayfaya yönlendir
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) =>
+                                            const BottomNavBar(),
+                                      ),
+                                    );
+                                  } catch (e) {
+                                    // Dialog'ları kapat (açık kalmışsa)
+                                    if (mounted &&
+                                        Navigator.of(context).canPop()) {
+                                      Navigator.of(context).pop();
+                                    }
+
+                                    if (mounted) {
+                                      print('Apple Sign In Hatası: $e');
+                                      String errorMessage = e.toString();
+
+                                      // Kullanıcı dostu hata mesajları
+                                      if (errorMessage.contains('canceled')) {
+                                        errorMessage =
+                                            'Apple ile giriş iptal edildi.';
+                                      } else if (errorMessage
+                                          .contains('network')) {
+                                        errorMessage =
+                                            'İnternet bağlantısı hatası. Lütfen bağlantınızı kontrol edin.';
+                                      } else if (errorMessage
+                                          .contains('Exception:')) {
+                                        errorMessage = errorMessage
+                                            .replaceAll('Exception:', '')
+                                            .trim();
+                                      }
+
+                                      _showErrorDialog(errorMessage);
+                                    }
+                                  }
+                                },
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.white,
+                                  foregroundColor: Colors.black,
+                                  side: const BorderSide(color: Colors.grey),
+                                  padding:
+                                      const EdgeInsets.symmetric(vertical: 12),
+                                ),
+                                child: const Row(
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Icon(Icons.apple),
+                                    SizedBox(width: 8),
+                                    Text("Apple ile Giriş Yap"),
+                                  ],
+                                ),
+                              ),
                           ],
                         ),
                       ),

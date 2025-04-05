@@ -16,17 +16,20 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'views/onboarding_screen.dart';
 import 'widgets/bottom_navigation_bar.dart';
 import 'viewmodels/payment_view_model.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Flutter binding'i başlat
+  try {
+    WidgetsFlutterBinding.ensureInitialized();
 
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
+    // Firebase'i başlat
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    );
 
-  // Uygulamayı başlatırken önbelleği temizle
-  final cacheService = CacheService();
-  cacheService.clearAllCache().then((_) {
+    // Önbelleği temizle
+    final cacheService = CacheService();
+    await cacheService.clearAllCache();
     print('Uygulama başlangıcında önbellek temizlendi');
 
     runApp(
@@ -99,7 +102,9 @@ void main() async {
         child: const TripazApp(),
       ),
     );
-  });
+  } catch (e) {
+    print('Hata oluştu: $e');
+  }
 }
 
 class TripazApp extends StatelessWidget {
